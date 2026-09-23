@@ -1,0 +1,70 @@
+{
+  "name": "bizzi-mac-cleaner",
+  "version": "0.1.0",
+  "description": "Interactive TUI to reclaim disk space from developer caches, stale project artifacts, and large files on macOS.",
+  "type": "module",
+  "bin": {
+    "bizzi-mac-cleaner": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "SECURITY.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "BIZZI_DRY_RUN=1 tsx src/cli.ts",
+    "build": "tsc",
+    "start": "node dist/cli.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "fixture": "tsx scripts/generate-fixture.ts",
+    "audit:prod": "npm audit --omit=dev",
+    "prepublishOnly": "npm test && npm run build"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "macos",
+    "disk-cleanup",
+    "developer",
+    "tui",
+    "ink",
+    "node_modules"
+  ],
+  "license": "MIT",
+  "author": "Bizzi Tech LTDA",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MiguelBizzi/bizzi-mac-cleaner.git"
+  },
+  "homepage": "https://github.com/MiguelBizzi/bizzi-mac-cleaner#readme",
+  "bugs": {
+    "url": "https://github.com/MiguelBizzi/bizzi-mac-cleaner/issues"
+  },
+  "dependencies": {
+    "commander": "^12.1.0",
+    "conf": "^13.1.0",
+    "ink": "^5.1.0",
+    "ink-select-input": "^6.0.0",
+    "ink-spinner": "^5.0.0",
+    "ink-text-input": "^6.0.0",
+    "p-limit": "^6.2.0",
+    "react": "^18.3.1",
+    "trash": "^9.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@types/react": "^18.3.18",
+    "@vitest/coverage-v8": "^2.1.8",
+    "memfs": "^4.15.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}

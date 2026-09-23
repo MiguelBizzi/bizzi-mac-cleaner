@@ -1,0 +1,107 @@
+import type { CleanupItem, ScannerId } from "../scanners/types.js";
+
+export function toggleId(selected: Set<string>, id: string): Set<string> {
+  const next = new Set(selected);
+  if (next.has(id)) next.delete(id);
+  else next.add(id);
+  return next;
+}
+
+export function selectAllInCategory(
+  selected: Set<string>,
+  items: CleanupItem[],
+  category: ScannerId,
+): Set<string> {
+  const next = new Set(selected);
+  const inCat = items.filter((i) => i.category === category);
+  const allOn = inCat.length > 0 && inCat.every((i) => next.has(i.id));
+  for (const item of inCat) {
+    if (allOn) next.delete(item.id);
+    else next.add(item.id);
+  }
+  return next;
+}
+
+/** Toggle every item: if all are selected, clear; otherwise select all. */
+export function toggleAll(items: CleanupItem[], selected: Set<string>): Set<string> {
+  const allOn = items.length > 0 && items.every((i) => selected.has(i.id));
+  if (allOn) return new Set();
+  return new Set(items.map((i) => i.id));
+}
+
+export type CheckState = "all" | "none" | "some";
+
+export function checkGlyph(state: CheckState): string {
+  if (state === "all") return "[x]";
+  if (state === "some") return "[~]";
+  return "[ ]";
+}
+
+export function categoryCheckState(
+  items: CleanupItem[],
+  selected: Set<string>,
+  category: ScannerId,
+): CheckState {
+  const inCat = items.filter((i) => i.category === category);
+  if (inCat.length === 0) return "none";
+  const n = inCat.filter((i) => selected.has(i.id)).length;
+  if (n === 0) return "none";
+  if (n === inCat.length) return "all";
+  return "some";
+}
+
+export function listCheckState(items: CleanupItem[], selected: Set<string>): CheckState {
+  if (items.length === 0) return "none";
+  const n = items.filter((i) => selected.has(i.id)).length;
+  if (n === 0) return "none";
+  if (n === items.length) return "all";
+  return "some";
+}
+
+export function selectedItems(items: CleanupItem[], selected: Set<string>): CleanupItem[] {
+  return items.filter((i) => selected.has(i.id));
+}
+
+export function selectedTotal(
+  items: CleanupItem[],
+  selected: Set<string>,
+): { count: number; bytes: number } {
+  let count = 0;
+  let bytes = 0;
+  for (const item of items) {
+    if (!selected.has(item.id)) continue;
+    count += 1;
+    bytes += item.sizeBytes;
+  }
+  return { count, bytes };
+}
+
+export interface CategoryGroup {
+  id: ScannerId;
+  items: CleanupItem[];
+  bytes: number;
+}
+
+export function groupByCategory(items: CleanupItem[]): CategoryGroup[] {
+  const map = new Map<ScannerId, CleanupItem[]>();
+  for (const item of items) {
+    const list = map.get(item.category) ?? [];
+    list.push(item);
+    map.set(item.category, list);
+  }
+  return [...map.entries()].map(([id, grouped]) => ({
+    id,
+    items: grouped,
+    bytes: grouped.reduce((sum, i) => sum + i.sizeBytes, 0),
+  }));
+}
+
+export function needsExtraConfirm(items: CleanupItem[]): boolean {
+  return items.some(
+    (i) => i.category === "docker_unused" || i.category === "xcode_archives" || i.risk === "caution",
+  );
+}
+
+export function dockerOrArchives(items: CleanupItem[]): boolean {
+  return items.some((i) => i.category === "docker_unused" || i.category === "xcode_archives");
+}
