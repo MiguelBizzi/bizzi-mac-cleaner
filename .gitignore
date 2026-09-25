@@ -5,3 +5,7 @@ coverage/
 .DS_Store
 .idea/
 .vscode/
+native/walker/target/
+native/*.node
+native/index.d.ts
+native/index.js

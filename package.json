@@ -1,6 +1,6 @@
 {
   "name": "bizzi-mac-cleaner",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Interactive TUI to reclaim disk space from developer caches, stale project artifacts, and large files on macOS.",
   "type": "module",
   "bin": {
@@ -8,6 +8,8 @@
   },
   "files": [
     "dist",
+    "native/bizzi-walker.darwin-arm64.node",
+    "native/bizzi-walker.darwin-x64.node",
     "README.md",
     "LICENSE",
     "SECURITY.md"
@@ -18,6 +20,7 @@
   "scripts": {
     "dev": "BIZZI_DRY_RUN=1 tsx src/cli.ts",
     "build": "tsc",
+    "build:native": "napi build --platform --release --cargo-cwd native/walker --config native/walker/package.json --js false native",
     "start": "node dist/cli.js",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -59,6 +62,7 @@
     "trash": "^9.0.0"
   },
   "devDependencies": {
+    "@napi-rs/cli": "^2.18.4",
     "@types/node": "^22.10.2",
     "@types/react": "^18.3.18",
     "@vitest/coverage-v8": "^2.1.8",

@@ -1,0 +1,23 @@
+[package]
+name = "bizzi-walker"
+version = "0.1.0"
+edition = "2021"
+description = "Parallel macOS directory walker for bizzi-mac-cleaner"
+license = "MIT"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+libc = "0.2"
+napi = { version = "2.16.17", default-features = false, features = ["napi4"] }
+napi-derive = "2.16.13"
+rayon = "1"
+
+[build-dependencies]
+napi-build = "2"
+
+[profile.release]
+lto = true
+codegen-units = 1

@@ -14,6 +14,9 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
@@ -28,6 +31,8 @@ jobs:
             exit 1
           fi
       - run: npm ci
+      - run: npm run build:native
+      - run: npx napi build --platform --release --target x86_64-apple-darwin --cargo-cwd native/walker --config native/walker/package.json --js false native
       - run: npm audit --omit=dev
       - run: npm test
       - run: npm run build

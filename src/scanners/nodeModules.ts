@@ -2,6 +2,7 @@ import path from "node:path";
 import { dirSize } from "../core/dirSize.js";
 import { daysAgo } from "../core/format.js";
 import { walk } from "../core/fsWalk.js";
+import { loadNative, streamNativeScan, type NodeModuleHit } from "../core/nativeWalk.js";
 import { itemId, statSafe } from "../core/paths.js";
 import type { CleanupItem, Scanner } from "./types.js";
 
@@ -36,6 +37,30 @@ export const nodeModulesScanner: Scanner = {
   id: "node_modules",
   labelKey: "scanners.nodeModules",
   async *scan(options) {
+    const native = loadNative();
+    if (native) {
+      for await (const hit of streamNativeScan<NodeModuleHit>(native, options.signal, (onItem, abort) =>
+        native.scanNodeModules(
+          options.root,
+          options.staleDays,
+          (_err, hit) => onItem(hit),
+          abort,
+        ),
+      )) {
+        const item: CleanupItem = {
+          id: itemId("node_modules", hit.path),
+          category: "node_modules",
+          path: hit.path,
+          sizeBytes: hit.sizeBytes,
+          lastModified: new Date(hit.mtimeMs),
+          description: path.basename(path.dirname(hit.path)),
+          risk: hit.stale ? "safe" : "caution",
+          stale: hit.stale,
+        };
+        yield item;
+      }
+      return;
+    }
     for await (const entry of walk(options.root, {
       excludeNames: EXCLUDE,
       stopAtName: "node_modules",

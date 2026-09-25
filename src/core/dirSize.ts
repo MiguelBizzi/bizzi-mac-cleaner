@@ -1,6 +1,7 @@
 import { Worker } from "node:worker_threads";
 import { fileURLToPath } from "node:url";
 import pLimit from "p-limit";
+import { loadNative } from "./nativeWalk.js";
 import { walk } from "./fsWalk.js";
 
 const workerLimit = pLimit(2);
@@ -58,6 +59,20 @@ function sizeViaWorker(dir: string): Promise<number> {
  * (memfs cannot cross the worker boundary).
  */
 export async function dirSize(dir: string, signal?: AbortSignal): Promise<number> {
+  const native = loadNative();
+  if (native) {
+    const abort = native.AbortFlag.create();
+    const onAbort = () => abort.abort();
+    if (signal?.aborted) abort.abort();
+    signal?.addEventListener("abort", onAbort);
+    try {
+      return await native.directorySize(dir, abort);
+    } catch {
+      return sizeInline(dir, signal);
+    } finally {
+      signal?.removeEventListener("abort", onAbort);
+    }
+  }
   if (!shouldUseWorker()) return sizeInline(dir, signal);
   try {
     return await workerLimit(() => sizeViaWorker(dir));
