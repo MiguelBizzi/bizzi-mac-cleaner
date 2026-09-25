@@ -6,6 +6,7 @@ import { deleteItems, type DeleteFailure } from "../core/deleteItems.js";
 import { revealInFinder } from "../core/finder.js";
 import { formatBytes, isoDate, sizeBar, truncatePath } from "../core/format.js";
 import { t } from "../core/i18n.js";
+import { isReusableScan } from "../core/scanCache.js";
 import { followScroll, moveCursor } from "../core/scanView.js";
 import {
   checkGlyph,
@@ -26,13 +27,18 @@ const HEADER_CHROME = 11;
 const BAR_WIDTH = 16;
 
 export function LargestFilesScreen(): React.ReactElement {
-  const { root, config, navigate } = useAppContext();
+  const { root, config, navigate, getScanCache, setScanCache } = useAppContext();
   const { stdout } = useStdout();
   const n = config.largestFilesCount;
+  const params = { root, staleDays: config.staleDays, largestFilesCount: n };
+  const cached = getScanCache("largest");
+  const restore = isReusableScan(cached, params);
+  const skipInitialScan = useRef(restore);
+  const [scanNonce, setScanNonce] = useState(0);
   const topRef = useRef(new TopN<CleanupItem>(n, (item) => item.sizeBytes));
-  const [items, setItems] = useState<CleanupItem[]>([]);
+  const [items, setItems] = useState<CleanupItem[]>(() => (restore && cached ? cached.items : []));
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [done, setDone] = useState(false);
+  const [done, setDone] = useState(restore);
   const [cursor, setCursor] = useState(0);
   const [scroll, setScroll] = useState(0);
   const [phase, setPhase] = useState<"list" | "confirm" | "deleting" | "done">("list");
@@ -43,8 +49,14 @@ export function LargestFilesScreen(): React.ReactElement {
   const listHeight = Math.max(6, (stdout.rows || 24) - HEADER_CHROME);
 
   useEffect(() => {
+    if (scanNonce === 0 && skipInitialScan.current) return;
     const ac = new AbortController();
     topRef.current = new TopN<CleanupItem>(n, (item) => item.sizeBytes);
+    setItems([]);
+    setDone(false);
+    setSelected(new Set());
+    setCursor(0);
+    setScroll(0);
     void (async () => {
       try {
         for await (const item of largestFilesScanner.scan({
@@ -57,11 +69,21 @@ export function LargestFilesScreen(): React.ReactElement {
           setItems(topRef.current.toArray());
         }
       } finally {
-        if (!ac.signal.aborted) setDone(true);
+        if (!ac.signal.aborted) {
+          const collected = topRef.current.toArray();
+          setDone(true);
+          setScanCache("largest", {
+            items: collected,
+            done: true,
+            root,
+            staleDays: config.staleDays,
+            largestFilesCount: n,
+          });
+        }
       }
     })();
     return () => ac.abort();
-  }, [root, config.staleDays, n]);
+  }, [root, config.staleDays, n, scanNonce, setScanCache]);
 
   useEffect(() => {
     setCursor((c) => moveCursor(c, 0, rowCount));
@@ -90,6 +112,11 @@ export function LargestFilesScreen(): React.ReactElement {
     }
     if (input === "a") {
       setSelected((prev) => toggleAll(items, prev));
+      return;
+    }
+    if (input === "r") {
+      skipInitialScan.current = false;
+      setScanNonce((n) => n + 1);
       return;
     }
     if (input === " ") {
@@ -127,7 +154,17 @@ export function LargestFilesScreen(): React.ReactElement {
     setPhase("deleting");
     const result = await deleteItems(pending, root);
     const ids = new Set(result.succeeded.map((i) => i.id));
-    setItems((prev) => prev.filter((i) => !ids.has(i.id)));
+    const nextItems = items.filter((i) => !ids.has(i.id));
+    setItems(nextItems);
+    if (done) {
+      setScanCache("largest", {
+        items: nextItems,
+        done: true,
+        root,
+        staleDays: config.staleDays,
+        largestFilesCount: n,
+      });
+    }
     setSelected((prev) => {
       const next = new Set(prev);
       for (const id of ids) next.delete(id);

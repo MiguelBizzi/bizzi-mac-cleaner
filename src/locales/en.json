@@ -19,7 +19,7 @@
   "scan.items": "{count} items",
   "scan.total": "Found {size}",
   "scan.selected": "Selected {size} across {count} items",
-  "scan.hint": "↑↓ move  ←→ expand  space toggle  a select all  enter delete  o reveal  esc back",
+  "scan.hint": "↑↓ move  ←→ expand  space toggle  a select all  enter delete  o reveal  r rescan  esc back",
   "scan.stale": "stale",
   "scan.active": "active",
   "scan.safe": "safe",
@@ -56,7 +56,7 @@
   "empty.measuring": "Checking Trash size…",
   "empty.fail": "Could not empty Trash.",
 
-  "largest.hint": "↑↓ move  space toggle  a select all  o reveal  enter delete  esc back",
+  "largest.hint": "↑↓ move  space toggle  a select all  o reveal  enter delete  r rescan  esc back",
   "largest.open": "Open",
   "largest.delete": "Delete",
   "largest.skip": "Skip",

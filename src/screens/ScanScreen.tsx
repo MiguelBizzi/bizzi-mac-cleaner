@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Box, Text, useInput, useStdout } from "ink";
 import Spinner from "ink-spinner";
 import { useAppContext } from "../app.js";
@@ -6,6 +6,7 @@ import { deleteItems, type DeleteFailure } from "../core/deleteItems.js";
 import { revealInFinder } from "../core/finder.js";
 import { formatBytes } from "../core/format.js";
 import { t } from "../core/i18n.js";
+import { isReusableScan, type ScanCacheId } from "../core/scanCache.js";
 import { buildScanRows, followScroll, moveCursor } from "../core/scanView.js";
 import {
   categoryCheckState,
@@ -26,13 +27,20 @@ const HEADER_CHROME = 8;
 
 export function ScanScreen({
   scanners = cacheScanners,
+  cacheId = "scan",
 }: {
   scanners?: Scanner[];
+  cacheId?: ScanCacheId;
 }): React.ReactElement {
-  const { root, config, navigate } = useAppContext();
+  const { root, config, navigate, getScanCache, setScanCache } = useAppContext();
   const { stdout } = useStdout();
-  const [items, setItems] = useState<CleanupItem[]>([]);
-  const [done, setDone] = useState(false);
+  const params = { root, staleDays: config.staleDays };
+  const cached = getScanCache(cacheId);
+  const restore = isReusableScan(cached, params);
+  const skipInitialScan = useRef(restore);
+  const [scanNonce, setScanNonce] = useState(0);
+  const [items, setItems] = useState<CleanupItem[]>(() => (restore && cached ? cached.items : []));
+  const [done, setDone] = useState(restore);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [cursor, setCursor] = useState(0);
@@ -43,22 +51,39 @@ export function ScanScreen({
   const [failures, setFailures] = useState<DeleteFailure[]>([]);
 
   useEffect(() => {
+    if (scanNonce === 0 && skipInitialScan.current) return;
     const ac = new AbortController();
+    setItems([]);
+    setDone(false);
+    setSelected(new Set());
+    setExpanded(new Set());
+    setCursor(0);
+    setScroll(0);
     void (async () => {
+      const collected: CleanupItem[] = [];
       try {
         for await (const item of runScanners(scanners, {
           root,
           staleDays: config.staleDays,
           signal: ac.signal,
         })) {
+          collected.push(item);
           setItems((prev) => [...prev, item]);
         }
       } finally {
-        if (!ac.signal.aborted) setDone(true);
+        if (!ac.signal.aborted) {
+          setDone(true);
+          setScanCache(cacheId, {
+            items: collected,
+            done: true,
+            root,
+            staleDays: config.staleDays,
+          });
+        }
       }
     })();
     return () => ac.abort();
-  }, [root, config.staleDays, scanners]);
+  }, [root, config.staleDays, scanners, cacheId, scanNonce, setScanCache]);
 
   const rows = useMemo(() => buildScanRows(items, expanded), [items, expanded]);
   const listHeight = Math.max(6, (stdout.rows || 24) - HEADER_CHROME);
@@ -93,6 +118,11 @@ export function ScanScreen({
     }
     if (input === "a") {
       setSelected((prev) => toggleAll(items, prev));
+      return;
+    }
+    if (input === "r") {
+      skipInitialScan.current = false;
+      setScanNonce((n) => n + 1);
       return;
     }
     const row = rows[cursor];
@@ -141,7 +171,16 @@ export function ScanScreen({
     setPhase("deleting");
     const result = await deleteItems(pending, root);
     const ids = new Set(result.succeeded.map((i) => i.id));
-    setItems((prev) => prev.filter((i) => !ids.has(i.id)));
+    const nextItems = items.filter((i) => !ids.has(i.id));
+    setItems(nextItems);
+    if (done) {
+      setScanCache(cacheId, {
+        items: nextItems,
+        done: true,
+        root,
+        staleDays: config.staleDays,
+      });
+    }
     setSelected((prev) => {
       const next = new Set(prev);
       for (const id of ids) next.delete(id);

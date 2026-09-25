@@ -19,7 +19,7 @@
   "scan.items": "{count} itens",
   "scan.total": "Encontrado {size}",
   "scan.selected": "Selecionado {size} em {count} itens",
-  "scan.hint": "↑↓ mover  ←→ expandir  espaço marcar  a selecionar todos  enter apagar  o revelar  esc voltar",
+  "scan.hint": "↑↓ mover  ←→ expandir  espaço marcar  a selecionar todos  enter apagar  o revelar  r reescanear  esc voltar",
   "scan.stale": "parado",
   "scan.active": "ativo",
   "scan.safe": "seguro",
@@ -56,7 +56,7 @@
   "empty.measuring": "Medindo o Lixo…",
   "empty.fail": "Não foi possível esvaziar o Lixo.",
 
-  "largest.hint": "↑↓ mover  espaço marcar  a selecionar todos  o revelar  enter apagar  esc voltar",
+  "largest.hint": "↑↓ mover  espaço marcar  a selecionar todos  o revelar  enter apagar  r reescanear  esc voltar",
   "largest.open": "Abrir",
   "largest.delete": "Apagar",
   "largest.skip": "Pular",

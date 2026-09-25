@@ -128,16 +128,16 @@ Confirm the output shape still matches what `src/core/shell/*` parses.
 
 ## Packaging
 
-Public installs come from npm. Maintainer steps, the release workflow, and how later versions reach users are in [DEPLOY.md](./DEPLOY.md).
+Install from the public npm package. The source lives at [MiguelBizzi/bizzi-mac-cleaner](https://github.com/MiguelBizzi/bizzi-mac-cleaner).
 
 ```bash
 npm i -g bizzi-mac-cleaner
 bizzi-mac-cleaner --dry-run   # first run: preview only
 ```
 
-`prepublishOnly` runs tests and `tsc`. Run `npm run audit:prod` before tagging. CI is [`.github/workflows/ci.yml`](.github/workflows/ci.yml). A `v*` tag runs [`.github/workflows/release.yml`](.github/workflows/release.yml), which publishes that version with provenance.
+Later versions: `npm update -g bizzi-mac-cleaner`, or `npx bizzi-mac-cleaner@latest --dry-run`.
 
-A signed standalone binary is not part of this release. Gatekeeper applies to downloaded `.app` bundles and unsigned binaries, not `npm i -g`. Do not ship `nexe`/`pkg` until there is a signing identity and notarization pipeline.
+CI is [`.github/workflows/ci.yml`](.github/workflows/ci.yml). A `v*` tag that matches `package.json` runs [`.github/workflows/release.yml`](.github/workflows/release.yml) and publishes that version to npm with provenance. Report vulnerabilities in [SECURITY.md](./SECURITY.md).
 
 ## License
 

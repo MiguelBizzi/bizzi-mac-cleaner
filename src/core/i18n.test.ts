@@ -27,4 +27,9 @@ describe("i18n", () => {
     expect(t("empty.typePrompt", { phrase: "empty" })).toContain("empty");
     expect(t("confirm.nextList")).toContain("back to the list");
   });
+
+  it("documents the rescan shortcut on scan screens", () => {
+    expect(t("scan.hint")).toContain("r rescan");
+    expect(t("largest.hint")).toContain("r rescan");
+  });
 });

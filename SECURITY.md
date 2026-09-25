@@ -13,8 +13,8 @@ Bizzi Mac Cleaner is a local macOS tool. It reads directories you choose to scan
 
 Please **do not** open a public issue for a vulnerability that could cause data loss or unexpected deletion.
 
-1. Use GitHub **Private vulnerability reporting** on [MiguelBizzi/bizzi-mac-cleaner](https://github.com/MiguelBizzi/bizzi-mac-cleaner/security/advisories/new), or
-2. Contact the maintainer via the [GitHub profile](https://github.com/MiguelBizzi).
+1. Use GitHub **private vulnerability reporting** on [MiguelBizzi/bizzi-mac-cleaner](https://github.com/MiguelBizzi/bizzi-mac-cleaner/security/advisories/new), or
+2. Open a discussion with the maintainer on the [public repository](https://github.com/MiguelBizzi/bizzi-mac-cleaner).
 
 Include: affected version, steps to reproduce, and what you expected instead. We will acknowledge within a few days and ship a fix before any write-up.
 

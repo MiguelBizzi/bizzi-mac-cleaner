@@ -3,6 +3,7 @@ import { Box, Text, useApp, useStdout } from "ink";
 import { loadConfig, updateConfig, type AppConfig } from "./core/config.js";
 import { isDryRun } from "./core/deleteSafely.js";
 import { t, setLocale } from "./core/i18n.js";
+import { type ScanCacheId, type ScanSnapshot } from "./core/scanCache.js";
 import { clearScreen } from "./core/terminal.js";
 import { MainMenu } from "./screens/MainMenu.js";
 import { ScanScreen } from "./screens/ScanScreen.js";
@@ -19,6 +20,8 @@ export interface AppContextValue {
   config: AppConfig;
   patchConfig: (patch: Partial<AppConfig>) => void;
   navigate: (screen: ScreenName) => void;
+  getScanCache: (id: ScanCacheId) => ScanSnapshot | undefined;
+  setScanCache: (id: ScanCacheId, snapshot: ScanSnapshot) => void;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -39,6 +42,7 @@ export function App({ root: initialRoot, dryRun }: AppProps): React.ReactElement
   const { stdout } = useStdout();
   const [screen, setScreen] = useState<ScreenName>("menu");
   const [config, setConfig] = useState<AppConfig>(() => loadConfig());
+  const [scanCache, setScanCacheState] = useState<Partial<Record<ScanCacheId, ScanSnapshot>>>({});
 
   const patchConfig = useCallback((patch: Partial<AppConfig>) => {
     const next = updateConfig(patch);
@@ -54,10 +58,16 @@ export function App({ root: initialRoot, dryRun }: AppProps): React.ReactElement
     [stdout],
   );
 
+  const getScanCache = useCallback((id: ScanCacheId) => scanCache[id], [scanCache]);
+
+  const setScanCache = useCallback((id: ScanCacheId, snapshot: ScanSnapshot) => {
+    setScanCacheState((prev) => ({ ...prev, [id]: snapshot }));
+  }, []);
+
   const root = initialRoot;
   const value = useMemo<AppContextValue>(
-    () => ({ root, dryRun, config, patchConfig, navigate }),
-    [root, dryRun, config, patchConfig, navigate],
+    () => ({ root, dryRun, config, patchConfig, navigate, getScanCache, setScanCache }),
+    [root, dryRun, config, patchConfig, navigate, getScanCache, setScanCache],
   );
 
   const rows = stdout.rows || 24;

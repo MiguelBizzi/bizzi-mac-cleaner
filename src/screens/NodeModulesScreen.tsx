@@ -5,5 +5,5 @@ import { ScanScreen } from "./ScanScreen.js";
 const SCANNERS = [nodeModulesScanner];
 
 export function NodeModulesScreen(): React.ReactElement {
-  return <ScanScreen scanners={SCANNERS} />;
+  return <ScanScreen scanners={SCANNERS} cacheId="nodeModules" />;
 }
