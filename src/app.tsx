@@ -1,10 +1,11 @@
-import React, { createContext, useCallback, useContext, useMemo, useState } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { Box, Text, useApp, useStdout } from "ink";
 import { loadConfig, updateConfig, type AppConfig } from "./core/config.js";
 import { isDryRun } from "./core/deleteSafely.js";
 import { t, setLocale } from "./core/i18n.js";
 import { type ScanCacheId, type ScanSnapshot } from "./core/scanCache.js";
 import { clearScreen } from "./core/terminal.js";
+import { checkForUpdate, type UpdateNotice } from "./core/updateCheck.js";
 import { MainMenu } from "./screens/MainMenu.js";
 import { ScanScreen } from "./screens/ScanScreen.js";
 import { NodeModulesScreen } from "./screens/NodeModulesScreen.js";
@@ -43,6 +44,15 @@ export function App({ root: initialRoot, dryRun }: AppProps): React.ReactElement
   const [screen, setScreen] = useState<ScreenName>("menu");
   const [config, setConfig] = useState<AppConfig>(() => loadConfig());
   const [scanCache, setScanCacheState] = useState<Partial<Record<ScanCacheId, ScanSnapshot>>>({});
+  const [updateNotice, setUpdateNotice] = useState<UpdateNotice | null>(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void checkForUpdate({ signal: controller.signal }).then((notice) => {
+      if (!controller.signal.aborted && notice) setUpdateNotice(notice);
+    });
+    return () => controller.abort();
+  }, []);
 
   const patchConfig = useCallback((patch: Partial<AppConfig>) => {
     const next = updateConfig(patch);
@@ -86,6 +96,14 @@ export function App({ root: initialRoot, dryRun }: AppProps): React.ReactElement
           )}
         </Box>
         <Text dimColor>{t("app.root", { root })}</Text>
+        {updateNotice ? (
+          <Text color="yellow">
+            {t("app.updateAvailable", {
+              current: updateNotice.current,
+              latest: updateNotice.latest,
+            })}
+          </Text>
+        ) : null}
         <Box marginTop={1} flexDirection="column" flexGrow={1}>
           {screen === "menu" ? <MainMenu onQuit={() => exit()} /> : null}
           {screen === "scan" ? <ScanScreen /> : null}

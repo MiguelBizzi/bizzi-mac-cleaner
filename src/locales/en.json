@@ -4,6 +4,7 @@
   "app.dryRunBanner": "DRY-RUN — nothing will be sent to Trash",
   "app.liveBanner": "LIVE — confirmed items go to Trash (recoverable)",
   "app.root": "Root: {root}",
+  "app.updateAvailable": "Update available ({current} → {latest}). Run npm update -g bizzi-mac-cleaner, or npx bizzi-mac-cleaner@latest",
 
   "menu.scanCaches": "Scan Caches",
   "menu.nodeModules": "Find node_modules",
