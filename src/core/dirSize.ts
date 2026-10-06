@@ -6,6 +6,13 @@ import { walk } from "./fsWalk.js";
 
 const workerLimit = pLimit(2);
 
+/**
+ * `.git` has no cleanup value. `File Provider Storage` is a fileproviderd mount;
+ * scandir on it (often `…/File Provider Storage/.Trash` inside a CoreSimulator
+ * device) returns ETIMEDOUT and used to crash the scan.
+ */
+const SIZE_SKIP = [".git", "File Provider Storage"];
+
 export async function sizeInline(dir: string, signal?: AbortSignal): Promise<number> {
   let total = 0;
   try {
@@ -16,7 +23,7 @@ export async function sizeInline(dir: string, signal?: AbortSignal): Promise<num
     return 0;
   }
   for await (const entry of walk(dir, {
-    excludeNames: [".git"],
+    excludeNames: SIZE_SKIP,
     followSymlinks: false,
     signal,
   })) {

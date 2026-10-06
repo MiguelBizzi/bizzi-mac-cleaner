@@ -29,8 +29,37 @@ const DEFAULT_EXCLUDE = new Set([
 ]);
 
 /**
+ * Directories that cannot be listed. Includes file-provider mounts inside
+ * CoreSimulator (errno ETIMEDOUT / scandir on `File Provider Storage/.Trash`).
+ */
+const SKIPPABLE_FS_CODES = new Set([
+  "EACCES",
+  "EPERM",
+  "ENOENT",
+  "EIO",
+  "ETIMEDOUT",
+  "ENOTCONN",
+  "ESTALE",
+  "ENXIO",
+  "ENODEV",
+  "ENOTDIR",
+  "ECONNRESET",
+  "ECONNABORTED",
+  "ENETDOWN",
+  "ENETUNREACH",
+  "EHOSTDOWN",
+  "EHOSTUNREACH",
+  "ESHUTDOWN",
+]);
+
+function isSkippableFsError(err: unknown): boolean {
+  const code = (err as NodeJS.ErrnoException).code;
+  return code !== undefined && SKIPPABLE_FS_CODES.has(code);
+}
+
+/**
  * Concurrent recursive walker. Does not follow symlinks by default (avoids cycles).
- * Permission-denied and vanished entries are skipped.
+ * Unreadable and vanished entries are skipped.
  */
 export async function* walk(root: string, options: WalkOptions = {}): AsyncGenerator<WalkEntry> {
   const exclude = new Set(options.excludeNames ?? DEFAULT_EXCLUDE);
@@ -51,10 +80,7 @@ export async function* walk(root: string, options: WalkOptions = {}): AsyncGener
             const dirents = await fsp.readdir(dir, { withFileTypes: true });
             return { dir, depth, dirents };
           } catch (err) {
-            const code = (err as NodeJS.ErrnoException).code;
-            if (code === "EACCES" || code === "EPERM" || code === "ENOENT") {
-              return { dir, depth, dirents: [] };
-            }
+            if (isSkippableFsError(err)) return { dir, depth, dirents: [] };
             throw err;
           }
         }),
@@ -78,8 +104,7 @@ export async function* walk(root: string, options: WalkOptions = {}): AsyncGener
           size = st.size;
           mtime = st.mtime;
         } catch (err) {
-          const code = (err as NodeJS.ErrnoException).code;
-          if (code === "EACCES" || code === "EPERM" || code === "ENOENT") continue;
+          if (isSkippableFsError(err)) continue;
           throw err;
         }
 

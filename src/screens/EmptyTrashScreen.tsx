@@ -28,6 +28,8 @@ export function EmptyTrashScreen(): React.ReactElement {
         })) {
           if (!ac.signal.aborted) setItem(found);
         }
+      } catch {
+        // One unreadable directory must not reject this floating task and kill the process.
       } finally {
         if (!ac.signal.aborted) setLoading(false);
       }

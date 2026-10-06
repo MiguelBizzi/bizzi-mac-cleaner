@@ -70,6 +70,8 @@ export function ScanScreen({
           collected.push(item);
           setItems((prev) => [...prev, item]);
         }
+      } catch {
+        // One unreadable directory must not reject this floating task and kill the process.
       } finally {
         if (!ac.signal.aborted) {
           setDone(true);

@@ -1,6 +1,6 @@
 {
   "name": "bizzi-mac-cleaner",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Interactive TUI to reclaim disk space from developer caches, stale project artifacts, and large files on macOS.",
   "type": "module",
   "bin": {

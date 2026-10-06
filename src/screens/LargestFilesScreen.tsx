@@ -68,6 +68,8 @@ export function LargestFilesScreen(): React.ReactElement {
           topRef.current.push(item);
           setItems(topRef.current.toArray());
         }
+      } catch {
+        // One unreadable directory must not reject this floating task and kill the process.
       } finally {
         if (!ac.signal.aborted) {
           const collected = topRef.current.toArray();

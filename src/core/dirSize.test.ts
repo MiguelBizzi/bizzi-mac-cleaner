@@ -24,4 +24,12 @@ describe("dirSize", () => {
     expect(await dirSize("/fixture")).toBe(10);
     expect(await sizeInline("/fixture/missing")).toBe(0);
   });
+
+  it("does not descend into File Provider Storage", async () => {
+    vol.fromJSON({
+      "/fixture/local.txt": "abcd",
+      "/fixture/File Provider Storage/.Trash/cloud.bin": "x".repeat(100),
+    });
+    expect(await sizeInline("/fixture")).toBe(4);
+  });
 });

@@ -55,6 +55,33 @@ describe("fsWalk", () => {
     expect(paths.some((p) => p.includes("hidden.txt"))).toBe(false);
   });
 
+  it("skips directories whose scandir times out", async () => {
+    vol.fromJSON({
+      "/fixture/ok/file.txt": "ok",
+      "/fixture/File Provider Storage/.Trash/item.txt": "cloud",
+    });
+    const real = fsp.readdir.bind(fsp);
+    const spy = vi.spyOn(fsp, "readdir").mockImplementation(async (dir, opts) => {
+      if (String(dir).includes("File Provider Storage")) {
+        const err = Object.assign(new Error("ETIMEDOUT"), {
+          code: "ETIMEDOUT",
+          errno: -60,
+          syscall: "scandir",
+          path: String(dir),
+        });
+        throw err;
+      }
+      return real(dir as string, opts as { withFileTypes?: boolean });
+    });
+    try {
+      const paths = await pathsOf("/fixture");
+      expect(paths).toContain("/fixture/ok/file.txt");
+      expect(paths.some((p) => p.includes("item.txt"))).toBe(false);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
   it("does not recurse into stopAtName directories", async () => {
     vol.fromJSON({
       "/fixture/app/node_modules/pkg/index.js": "x",

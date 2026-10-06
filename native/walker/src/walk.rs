@@ -21,7 +21,7 @@ const FSOPT_PACK_INVAL_ATTRS: u64 = 0x0000_0008;
 const VDIR: u32 = 2;
 const VLNK: u32 = 5;
 
-const DIR_SIZE_SKIP: &[&str] = &[".git"];
+const DIR_SIZE_SKIP: &[&str] = &[".git", "File Provider Storage"];
 
 const NODE_MODULES_SKIP: &[&str] = &[
     ".Trash",
@@ -214,8 +214,9 @@ fn is_denied(err: &std::io::Error) -> bool {
         || err.raw_os_error() == Some(libc::ENOENT)
 }
 
-/// Logical byte size. Skips `.git`. Does not follow symlinks. Missing or
-/// unreadable paths contribute 0.
+/// Logical byte size. Skips `.git` and `File Provider Storage` (fileproviderd
+/// mounts that time out under CoreSimulator). Does not follow symlinks.
+/// Missing or unreadable paths contribute 0.
 pub fn directory_size(path: &Path, abort: &AtomicBool) -> u64 {
     if aborted(abort) {
         return 0;
@@ -507,6 +508,17 @@ mod tests {
         restore.set_mode(0o755);
         fs::set_permissions(&secret, restore).unwrap();
         assert_eq!(size, 2);
+    }
+
+    #[test]
+    fn directory_size_skips_file_provider_storage() {
+        let tmp = Temp(temp_dir());
+        fs::write(tmp.0.join("local.txt"), "abcd").unwrap();
+        let provider = tmp.0.join("File Provider Storage");
+        fs::create_dir(&provider).unwrap();
+        fs::write(provider.join("cloud.bin"), "x".repeat(100)).unwrap();
+        let abort = AtomicBool::new(false);
+        assert_eq!(directory_size(&tmp.0, &abort), 4);
     }
 
     #[test]
