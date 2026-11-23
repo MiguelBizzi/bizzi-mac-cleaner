@@ -36,6 +36,7 @@ export function currentMacOS(): MacOSVersion | null {
     const out = execFileSync("/usr/bin/sw_vers", ["-productVersion"], {
       encoding: "utf8",
       timeout: 3000,
+      stdio: ["ignore", "pipe", "ignore"],
     });
     result = parseProductVersion(String(out));
   } catch {
@@ -54,6 +55,7 @@ export function compareVersions(a: MacOSVersion, b: MacOSVersion): number {
   return a.major - b.major || a.minor - b.minor || a.patch - b.patch;
 }
 
+/** Bounds are inclusive; `max: "15"` means 15.0.0 only (excludes 15.4). Unparseable bounds fail closed (false). */
 export function inRange(
   v: MacOSVersion | null,
   range?: { min?: string; max?: string },
@@ -62,11 +64,11 @@ export function inRange(
   if (v === null) return false;
   if (range.min !== undefined) {
     const min = parseProductVersion(range.min);
-    if (min && compareVersions(v, min) < 0) return false;
+    if (!min || compareVersions(v, min) < 0) return false;
   }
   if (range.max !== undefined) {
     const max = parseProductVersion(range.max);
-    if (max && compareVersions(v, max) > 0) return false;
+    if (!max || compareVersions(v, max) > 0) return false;
   }
   return true;
 }

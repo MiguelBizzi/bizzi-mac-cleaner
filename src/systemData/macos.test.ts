@@ -24,7 +24,10 @@ import {
 const v = (s: string) => parseProductVersion(s)!;
 
 describe("macOS version awareness", () => {
-  beforeEach(() => setMacOSForTests(undefined));
+  beforeEach(() => {
+    vi.mocked(execFileSync).mockClear();
+    setMacOSForTests(undefined);
+  });
 
   it("parses sw_vers output", () => {
     expect(parseProductVersion("27.0.1\n")).toEqual({ major: 27, minor: 0, patch: 1 });
@@ -49,6 +52,11 @@ describe("macOS version awareness", () => {
     expect(inRange(null, undefined)).toBe(true);
   });
 
+  it("fails closed on unparseable bounds", () => {
+    expect(inRange(v("26.0"), { min: "15.x" })).toBe(false);
+    expect(inRange(v("26.0"), { max: "Sequoia" })).toBe(false);
+  });
+
   it("compares versions", () => {
     expect(compareVersions(v("15.1"), v("15.1.0"))).toBe(0);
     expect(compareVersions(v("14.9"), v("15.0"))).toBeLessThan(0);
@@ -66,6 +74,7 @@ describe("macOS version awareness", () => {
     vi.mocked(execFileSync).mockReturnValueOnce("26.2\n" as never);
     expect(currentMacOS()).toEqual({ major: 26, minor: 2, patch: 0 });
     expect(currentMacOS()?.major).toBe(26);
+    expect(execFileSync).toHaveBeenCalledTimes(1);
     expect(execFileSync).toHaveBeenLastCalledWith(
       "/usr/bin/sw_vers",
       ["-productVersion"],
