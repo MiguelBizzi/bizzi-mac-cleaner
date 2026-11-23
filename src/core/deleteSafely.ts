@@ -1,5 +1,6 @@
 import os from "node:os";
 import path from "node:path";
+import { categoryViolation } from "./deletePolicy.js";
 import { formatTrashError } from "./format.js";
 import { appendHistory } from "./history.js";
 import {
@@ -30,7 +31,7 @@ export function isDryRun(): boolean {
   return env === "1" || env === "true" || env === "yes";
 }
 
-export function assertSafeToDelete(target: string, root: string): void {
+export function assertSafeToDelete(target: string, root: string, category?: string): void {
   const resolvedRoot = path.resolve(root);
   for (const resolved of pathsToAudit(target)) {
     if (resolved === resolvedRoot) {
@@ -48,6 +49,10 @@ export function assertSafeToDelete(target: string, root: string): void {
     if (isProtectedPath(resolved)) {
       throw new UnsafeDeleteError("refusing to delete a protected path");
     }
+  }
+  if (category !== undefined) {
+    const violation = categoryViolation(category, target, root);
+    if (violation) throw new UnsafeDeleteError(`refusing: ${violation}`);
   }
 }
 
@@ -74,7 +79,7 @@ function fail(error: unknown, dryRun: boolean): DeleteOutcome {
  */
 export async function deleteSafely(req: DeleteRequest): Promise<DeleteOutcome> {
   try {
-    assertSafeToDelete(req.path, req.root);
+    assertSafeToDelete(req.path, req.root, req.category);
   } catch (err) {
     return fail(err, isDryRun());
   }
@@ -114,7 +119,7 @@ export async function deleteSafely(req: DeleteRequest): Promise<DeleteOutcome> {
  */
 export async function emptyTrash(req: DeleteRequest): Promise<DeleteOutcome> {
   try {
-    assertSafeToDelete(req.path, req.root);
+    assertSafeToDelete(req.path, req.root, req.category);
   } catch (err) {
     return fail(err, isDryRun());
   }

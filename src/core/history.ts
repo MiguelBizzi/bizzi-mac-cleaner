@@ -39,7 +39,10 @@ export async function appendHistory(entry: HistoryEntry): Promise<void> {
     file.entries = file.entries.slice(-HISTORY_MAX_ENTRIES);
   }
   const dest = historyPath();
-  await fsp.writeFile(dest, JSON.stringify(file, null, 2), { mode: 0o600 });
+  // Write-then-rename so an interrupt never leaves a truncated history file.
+  const tmp = `${dest}.${process.pid}.tmp`;
+  await fsp.writeFile(tmp, JSON.stringify(file, null, 2), { mode: 0o600 });
+  await fsp.rename(tmp, dest);
   try {
     await fsp.chmod(dest, 0o600);
   } catch {

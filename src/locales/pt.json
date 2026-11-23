@@ -4,8 +4,7 @@
   "app.dryRunBanner": "DRY-RUN — nada será enviado para o Lixo",
   "app.liveBanner": "AO VIVO — itens confirmados vão para o Lixo (recuperáveis)",
   "app.root": "Raiz: {root}",
-  "app.updateAvailable": "Atualização disponível ({current} → {latest}). Rode npm update -g bizzi-mac-cleaner ou npx bizzi-mac-cleaner@latest",
-
+  "app.updateAvailable": "Atualização disponível ({current} → {latest}). Rode: npm i -g bizzi-mac-cleaner@latest",
   "menu.scanCaches": "Escanear caches",
   "menu.nodeModules": "Encontrar node_modules",
   "menu.largestFiles": "Maiores arquivos",
@@ -13,7 +12,6 @@
   "menu.settings": "Configurações",
   "menu.quit": "Sair",
   "menu.hint": "Setas + Enter  ·  q para sair",
-
   "scan.scanning": "Escaneando…",
   "scan.done": "Escaneamento concluído",
   "scan.empty": "Nada encontrado neste diretório.",
@@ -25,25 +23,23 @@
   "scan.active": "ativo",
   "scan.safe": "seguro",
   "scan.caution": "cuidado",
-
   "confirm.title": "Enviar para o Lixo?",
-  "confirm.summary": "Você está prestes a liberar {size} em {count} itens — enviar para o Lixo?",
+  "confirm.summary": "Mover {size} em {count} itens para o Lixo? (o espaço só é liberado ao esvaziar o Lixo)",
   "confirm.more": "…e mais {count}",
   "confirm.extra": "Isso pode remover coisas que você guardou de propósito — continuar?",
   "confirm.yes": "Sim, enviar para o Lixo",
   "confirm.no": "Cancelar",
   "confirm.deleting": "Enviando para o Lixo…",
   "confirm.successTitle": "Pronto",
-  "confirm.success": "Liberou {size} em {count} itens.",
-  "confirm.successDryRun": "Dry-run concluído — liberaria {size} em {count} itens. Nada foi movido.",
+  "confirm.success": "{size} em {count} itens movidos para o Lixo. Esvazie o Lixo para liberar o espaço, ou use Colocar de volta no Finder para restaurar.",
+  "confirm.successDryRun": "Prévia concluída — moveria {size} em {count} itens para o Lixo. Nada foi movido.",
   "confirm.failTitle": "Não foi possível enviar ao Lixo",
   "confirm.failAll": "Nenhum dos {count} itens pôde ser movido. O macOS negou o acesso (permissão, iCloud ou em uso).",
   "confirm.partialTitle": "Concluído em parte",
-  "confirm.partial": "Liberou {size} ({count} itens). {failed} não puderam ser movidos.",
+  "confirm.partial": "{size} movidos para o Lixo ({count} itens). {failed} não puderam ser movidos.",
   "confirm.nextList": "enter / esc  ·  voltar à lista",
   "confirm.nextMenu": "m            ·  menu principal",
   "confirm.nextMenuOnly": "enter / esc  ·  menu principal",
-
   "empty.title": "Esvaziar o Lixo?",
   "empty.extra": "Isso apaga para sempre tudo que está no Lixo. O Finder não desfaz.",
   "empty.summary": "Você está prestes a liberar {size} do Lixo de forma permanente — continuar?",
@@ -56,7 +52,6 @@
   "empty.alreadyEmpty": "O Lixo já está vazio.",
   "empty.measuring": "Medindo o Lixo…",
   "empty.fail": "Não foi possível esvaziar o Lixo.",
-
   "largest.hint": "↑↓ mover  espaço marcar  a selecionar todos  o revelar  enter apagar  r reescanear  esc voltar",
   "largest.open": "Abrir",
   "largest.delete": "Apagar",
@@ -64,7 +59,6 @@
   "largest.scanning": "Procurando os maiores arquivos…",
   "largest.done": "Top {count} arquivos",
   "largest.selectAll": "Selecionar todos",
-
   "settings.language": "Idioma",
   "settings.staleDays": "Inatividade de node_modules (dias)",
   "settings.scanRoot": "Diretório raiz",
@@ -73,7 +67,6 @@
   "settings.largestN": "Quantidade de maiores arquivos",
   "settings.hint": "↑↓ mover  enter editar/alternar  esc voltar",
   "settings.saved": "Salvo",
-
   "scanners.nodeModules": "node_modules",
   "scanners.npmCache": "cache do npm",
   "scanners.yarnCache": "cache do Yarn",
@@ -89,5 +82,7 @@
   "scanners.cargoCache": "cache do Cargo",
   "scanners.systemCachesAndLogs": "caches e logs do Mac",
   "scanners.trashBin": "Lixo",
-  "scanners.largestFiles": "Maiores arquivos"
+  "scanners.largestFiles": "Maiores arquivos",
+  "app.previewHint": "Modo prévia: nada será movido. Quando quiser, reinicie com: bizzi-mac-cleaner --no-dry-run",
+  "confirm.keys": "y · {yes}    n / esc · {no}"
 }

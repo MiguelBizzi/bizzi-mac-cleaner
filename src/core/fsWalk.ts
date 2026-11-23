@@ -16,6 +16,8 @@ export interface WalkOptions {
   excludeNames?: Iterable<string>;
   /** If true, yield a directory named `stopAtName` but do not recurse into it. */
   stopAtName?: string;
+  /** Return true to skip a directory (not descended into, not yielded). */
+  excludeDir?: (name: string) => boolean;
   maxDepth?: number;
   concurrency?: number;
   followSymlinks?: boolean;
@@ -91,6 +93,7 @@ export async function* walk(root: string, options: WalkOptions = {}): AsyncGener
       for (const dirent of dirents) {
         if (options.signal?.aborted) return;
         if (exclude.has(dirent.name)) continue;
+        if (options.excludeDir && dirent.isDirectory() && options.excludeDir(dirent.name)) continue;
 
         const full = path.join(dir, dirent.name);
         const isLink = dirent.isSymbolicLink();

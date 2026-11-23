@@ -65,7 +65,8 @@ export function ConfirmDeleteModal({
     // Permanent Empty Trash requires typing the phrase — y/Enter must not suffice.
     if (empty) return;
     if (input === "n") onCancel();
-    if (key.return || input === "y") onConfirm();
+    // Enter must NOT confirm: it opens this modal, so a stray/held Enter would delete.
+    if (input === "y") onConfirm();
   });
 
   const nextHints = (
@@ -177,7 +178,7 @@ export function ConfirmDeleteModal({
         </Box>
       ) : (
         <Text dimColor>
-          y / enter · {t("confirm.yes")}    n / esc · {t("confirm.no")}
+          {t("confirm.keys", { yes: t("confirm.yes"), no: t("confirm.no") })}
         </Text>
       )}
     </Box>

@@ -1,6 +1,6 @@
 import { walk } from "../core/fsWalk.js";
 import { loadNative, streamNativeScan, type LargeFileHit } from "../core/nativeWalk.js";
-import { itemId } from "../core/paths.js";
+import { isPackageName, itemId } from "../core/paths.js";
 import { TopN } from "../core/topN.js";
 import type { CleanupItem, Scanner } from "./types.js";
 
@@ -42,6 +42,7 @@ export const largestFilesScanner: Scanner = {
     const heap = new TopN<CleanupItem>(n, (item) => item.sizeBytes);
     for await (const entry of walk(options.root, {
       excludeNames: EXCLUDE,
+      excludeDir: isPackageName,
       followSymlinks: false,
       signal: options.signal,
     })) {

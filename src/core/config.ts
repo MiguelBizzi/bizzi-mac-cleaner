@@ -10,6 +10,10 @@ export interface AppConfig {
   scanRoot: string;
   confirmEveryDelete: boolean;
   largestFilesCount: number;
+  /** Set once the user has explicitly opted in to live mode (--no-dry-run). */
+  liveEnabled: boolean;
+  /** Check the npm registry for a newer version on launch. */
+  updateCheck: boolean;
 }
 
 const defaults: AppConfig = {
@@ -18,6 +22,8 @@ const defaults: AppConfig = {
   scanRoot: os.homedir(),
   confirmEveryDelete: false,
   largestFilesCount: 100,
+  liveEnabled: false,
+  updateCheck: true,
 };
 
 let store: Conf<AppConfig> | undefined;
@@ -55,6 +61,8 @@ export function loadConfig(): AppConfig {
     scanRoot: isSafeScanRoot(scanRoot) ? scanRoot : os.homedir(),
     confirmEveryDelete: s.get("confirmEveryDelete"),
     largestFilesCount: s.get("largestFilesCount"),
+    liveEnabled: s.get("liveEnabled"),
+    updateCheck: s.get("updateCheck"),
   };
 }
 

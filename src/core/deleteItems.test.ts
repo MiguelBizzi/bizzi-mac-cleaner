@@ -6,7 +6,7 @@ vi.mock("./deleteSafely.js", () => ({
   emptyTrash: vi.fn().mockResolvedValue({ ok: true, dryRun: true }),
 }));
 
-import { deleteItems } from "./deleteItems.js";
+import { deleteItems, drainDeletes, requestStopDeleting, resetStopForTests } from "./deleteItems.js";
 import { deleteSafely, emptyTrash } from "./deleteSafely.js";
 
 function item(category: CleanupItem["category"], path: string): CleanupItem {
@@ -21,7 +21,25 @@ function item(category: CleanupItem["category"], path: string): CleanupItem {
 }
 
 describe("deleteItems", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    resetStopForTests();
+  });
+
+  it("stops between items once a stop is requested and reports the rest as untouched", async () => {
+    vi.mocked(deleteSafely).mockImplementationOnce(async () => {
+      requestStopDeleting();
+      return { ok: true, dryRun: false };
+    });
+    const result = await deleteItems(
+      [item("npm_cache", "/f/a"), item("brew_cache", "/f/b"), item("pip_cache", "/f/c")],
+      "/f",
+    );
+    await drainDeletes();
+    expect(result.succeeded).toHaveLength(1);
+    expect(result.notStarted).toHaveLength(2);
+    expect(deleteSafely).toHaveBeenCalledTimes(1);
+  });
 
   it("routes trash_bin through emptyTrash and everything else through deleteSafely", async () => {
     const seen: string[] = [];

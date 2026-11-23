@@ -17,7 +17,7 @@ One-off, without a global install:
 npx bizzi-mac-cleaner@latest --dry-run
 ```
 
-The first run should be `--dry-run`. Without that flag, items you confirm go to the Trash.
+**Preview-first:** until you opt in to live mode once with `--no-dry-run`, nothing is ever moved — the app runs as a preview. In live mode, confirmed items go to the Trash (recoverable); space is only reclaimed after you empty the Trash.
 
 Update a global install later with `npm update -g bizzi-mac-cleaner`. A bare `npx bizzi-mac-cleaner` can reuse a cached copy; use `@latest` when you want the current release.
 
@@ -40,7 +40,8 @@ bizzi-mac-cleaner --no-dry-run   # force live mode even if BIZZI_DRY_RUN is set
 | --- | --- |
 | `--root <path>` | Scan root for every scanner. Default is `$HOME` (or the path saved in Settings). **Never** hard-coded inside scanners. Refuses `/`, `/Users`, and other system paths. |
 | `--dry-run` | `deleteSafely()` logs what it would trash and writes `history.json`, but does **not** call `trash()`. |
-| `--no-dry-run` | Force live mode for this process (overrides `BIZZI_DRY_RUN`). Deletes still need TUI confirmation. |
+| `--no-dry-run` | Opt in to live mode (remembered after the first use; overrides `BIZZI_DRY_RUN`). Deletes still need TUI confirmation. |
+| `-v, --version` | Print the version. |
 
 `BIZZI_DRY_RUN=1` (or `true` / `yes`) has the same effect as `--dry-run`. `npm run dev` sets it automatically.
 
@@ -69,10 +70,15 @@ The header shows **LIVE** (confirmed items go to Trash, recoverable) or **DRY-RU
   - `~/.config/bizzi-mac-cleaner` (app config + history)
   - system trees (`/System`, `/usr`, `/Library`, …)
   - secrets (`.ssh`, `.gnupg`, `.aws`, `.kube`, Keychains)
+  - anything that does not match its scanner's category allowlist (e.g. an "npm cache" can only be an npm cache path); largest-file results are never files inside macOS packages (`.photoslibrary`, `.app`, …) or `~/Library`
 - Scan root cannot be `/`, `/Users`, or another system path. Settings will ignore an unsafe value.
 - Items marked **caution** (largest files, Docker caches, Xcode Archives, Safari HTTPStorages / WebKit, active `node_modules`, …) show an extra warning before confirm.
 - Emptying `~/.Trash` is the one inherently permanent action (those files are already in Trash). Confirm by typing `empty` then Enter — `y` is not enough. Dry-run still only logs. A real empty of the user's Trash uses Finder; a fixture `.Trash` still goes through `trash()`.
 - Every attempt (including dry-run) is appended to `~/.config/bizzi-mac-cleaner/history.json` (mode `0600`, last 500 entries).
+
+Pressing Ctrl+C mid-delete finishes the item being moved, leaves the rest untouched, and exits cleanly.
+
+The app checks the npm registry for a newer version on launch (nothing else leaves your machine). Disable with `BIZZI_NO_UPDATE_CHECK=1` or `"updateCheck": false` in `config.json`.
 
 Config lives at `~/.config/bizzi-mac-cleaner/config.json` (locale, staleness days, default scan root, confirm-every-delete, largest-files N). The config directory is `0700`.
 

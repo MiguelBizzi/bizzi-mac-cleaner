@@ -54,12 +54,10 @@ describe("updateCheck", () => {
     const en = t("app.updateAvailable", { current: "0.1.0", latest: "0.2.0" });
     expect(en).toContain("0.1.0");
     expect(en).toContain("0.2.0");
-    expect(en).toContain("npm update -g bizzi-mac-cleaner");
-    expect(en).toContain("npx bizzi-mac-cleaner@latest");
+    expect(en).toContain("npm i -g bizzi-mac-cleaner@latest");
 
     setLocale("pt");
     const pt = t("app.updateAvailable", { current: "0.1.0", latest: "0.2.0" });
-    expect(pt).toContain("npm update -g bizzi-mac-cleaner");
-    expect(pt).toContain("npx bizzi-mac-cleaner@latest");
+    expect(pt).toContain("npm i -g bizzi-mac-cleaner@latest");
   });
 });

@@ -47,6 +47,7 @@ export function App({ root: initialRoot, dryRun }: AppProps): React.ReactElement
   const [updateNotice, setUpdateNotice] = useState<UpdateNotice | null>(null);
 
   useEffect(() => {
+    if (!config.updateCheck || process.env.BIZZI_NO_UPDATE_CHECK === "1") return;
     const controller = new AbortController();
     void checkForUpdate({ signal: controller.signal }).then((notice) => {
       if (!controller.signal.aborted && notice) setUpdateNotice(notice);
@@ -96,6 +97,9 @@ export function App({ root: initialRoot, dryRun }: AppProps): React.ReactElement
           )}
         </Box>
         <Text dimColor>{t("app.root", { root })}</Text>
+        {(isDryRun() || dryRun) && !config.liveEnabled ? (
+          <Text color="yellow">{t("app.previewHint")}</Text>
+        ) : null}
         {updateNotice ? (
           <Text color="yellow">
             {t("app.updateAvailable", {

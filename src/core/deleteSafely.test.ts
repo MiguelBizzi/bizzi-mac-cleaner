@@ -24,7 +24,8 @@ import {
 } from "./deleteSafely.js";
 
 const root = "/tmp/bizzi-fixture";
-const target = "/tmp/bizzi-fixture/Caches/npm";
+const target = "/tmp/bizzi-fixture/.npm/_cacache";
+const brewTarget = "/tmp/bizzi-fixture/Library/Caches/Homebrew";
 
 describe("deleteSafely", () => {
   beforeEach(() => {
@@ -50,15 +51,41 @@ describe("deleteSafely", () => {
 
   it("does not call trash() when setDryRun(true)", async () => {
     setDryRun(true);
-    await deleteSafely({ path: target, sizeBytes: 10, category: "brew_cache", root });
+    await deleteSafely({ path: brewTarget, sizeBytes: 10, category: "brew_cache", root });
     expect(trash).not.toHaveBeenCalled();
   });
 
   it("calls trash() when dry-run is explicitly off", async () => {
     setDryRun(false);
-    await deleteSafely({ path: target, sizeBytes: 10, category: "brew_cache", root });
-    expect(trash).toHaveBeenCalledWith([target]);
+    await deleteSafely({ path: brewTarget, sizeBytes: 10, category: "brew_cache", root });
+    expect(trash).toHaveBeenCalledWith([brewTarget]);
     expect(appendHistory).toHaveBeenCalledWith(expect.objectContaining({ dryRun: false }));
+  });
+
+  it("refuses a path that does not match its category", async () => {
+    setDryRun(false);
+    const result = await deleteSafely({
+      path: "/tmp/bizzi-fixture/Documents",
+      sizeBytes: 1,
+      category: "npm_cache",
+      root,
+    });
+    expect(result.ok).toBe(false);
+    expect(trash).not.toHaveBeenCalled();
+  });
+
+  it("refuses unknown categories", () => {
+    expect(() => assertSafeToDelete(target, root, "made_up")).toThrow(UnsafeDeleteError);
+  });
+
+  it("refuses largest-file paths inside macOS packages and ~/Library", () => {
+    expect(() =>
+      assertSafeToDelete(`${root}/Pictures/Photos Library.photoslibrary/originals/a.heic`, root, "largest_files"),
+    ).toThrow(UnsafeDeleteError);
+    expect(() =>
+      assertSafeToDelete(`${root}/Library/Mobile Documents/x.bin`, root, "largest_files"),
+    ).toThrow(UnsafeDeleteError);
+    expect(() => assertSafeToDelete(`${root}/Movies/big.mov`, root, "largest_files")).not.toThrow();
   });
 
   it("refuses to delete the scan root", () => {
@@ -100,7 +127,7 @@ describe("deleteSafely", () => {
         'Command failed: macos-trash /tmp/x\n“x” couldn’t be moved to the trash because you don’t have permission to access it.',
       ),
     );
-    const result = await deleteSafely({ path: target, sizeBytes: 10, category: "brew_cache", root });
+    const result = await deleteSafely({ path: brewTarget, sizeBytes: 10, category: "brew_cache", root });
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.error).toContain("permission");
     expect(appendHistory).not.toHaveBeenCalled();

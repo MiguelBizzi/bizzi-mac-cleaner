@@ -2,8 +2,10 @@
 import { Command } from "commander";
 import { render } from "ink";
 import React from "react";
+import { currentPackageVersion } from "./core/updateCheck.js";
 import { App } from "./app.js";
-import { loadConfig, scanRootFrom } from "./core/config.js";
+import { loadConfig, scanRootFrom, updateConfig } from "./core/config.js";
+import { drainDeletes, hasInFlightDeletes, requestStopDeleting } from "./core/deleteItems.js";
 import { isDryRun, setDryRun } from "./core/deleteSafely.js";
 import { initI18nFromConfig } from "./core/i18n.js";
 import { isSafeScanRoot } from "./core/paths.js";
@@ -13,6 +15,7 @@ const program = new Command();
 
 program
   .name("bizzi-mac-cleaner")
+  .version(currentPackageVersion(), "-v, --version", "Print the version")
   .description("Reclaim disk space from developer caches and large files (macOS).")
   .option("--root <path>", "Scan root (default: $HOME or settings scanRoot)")
   .option("--dry-run", "Log would-be deletes without sending anything to Trash")
@@ -32,11 +35,33 @@ program
       process.exit(1);
     }
 
-    if (opts.dryRun === true) setDryRun(true);
-    else if (opts.dryRun === false) setDryRun(false);
+    // Preview-first: until the user opts in to live mode once (--no-dry-run),
+    // nothing is ever sent to Trash. An explicit BIZZI_DRY_RUN value is respected.
+    if (opts.dryRun === true) {
+      setDryRun(true);
+    } else if (opts.dryRun === false) {
+      setDryRun(false);
+      if (!config.liveEnabled) updateConfig({ liveEnabled: true });
+    } else if (!config.liveEnabled && process.env.BIZZI_DRY_RUN === undefined) {
+      setDryRun(true);
+    }
 
-    const { waitUntilExit } = render(React.createElement(App, { root, dryRun: isDryRun() }));
-    await waitUntilExit();
+    const instance = render(React.createElement(App, { root, dryRun: isDryRun() }));
+    const onSignal = () => {
+      requestStopDeleting();
+      instance.unmount();
+    };
+    process.on("SIGINT", onSignal);
+    process.on("SIGTERM", onSignal);
+    await instance.waitUntilExit();
+
+    // Ctrl+C mid-delete: finish the item being trashed, skip the rest, then exit cleanly.
+    requestStopDeleting();
+    if (hasInFlightDeletes()) {
+      console.error("Stopping after the current item… anything already moved can be restored from the Trash.");
+      await drainDeletes();
+      console.error("Stopped. Remaining items were not touched.");
+    }
   });
 
 program.parseAsync(process.argv).catch((err: unknown) => {

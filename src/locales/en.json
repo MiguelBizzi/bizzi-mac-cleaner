@@ -4,8 +4,7 @@
   "app.dryRunBanner": "DRY-RUN — nothing will be sent to Trash",
   "app.liveBanner": "LIVE — confirmed items go to Trash (recoverable)",
   "app.root": "Root: {root}",
-  "app.updateAvailable": "Update available ({current} → {latest}). Run npm update -g bizzi-mac-cleaner, or npx bizzi-mac-cleaner@latest",
-
+  "app.updateAvailable": "Update available ({current} → {latest}). Run: npm i -g bizzi-mac-cleaner@latest",
   "menu.scanCaches": "Scan Caches",
   "menu.nodeModules": "Find node_modules",
   "menu.largestFiles": "Largest Files",
@@ -13,7 +12,6 @@
   "menu.settings": "Settings",
   "menu.quit": "Quit",
   "menu.hint": "Arrow keys + Enter  ·  q to quit",
-
   "scan.scanning": "Scanning…",
   "scan.done": "Scan complete",
   "scan.empty": "Nothing found under this root.",
@@ -25,25 +23,23 @@
   "scan.active": "active",
   "scan.safe": "safe",
   "scan.caution": "caution",
-
   "confirm.title": "Send to Trash?",
-  "confirm.summary": "You are about to free {size} across {count} items — send to Trash?",
+  "confirm.summary": "Move {size} across {count} items to the Trash? (space is reclaimed once you empty the Trash)",
   "confirm.more": "…and {count} more",
   "confirm.extra": "This may remove things you intentionally kept — continue?",
   "confirm.yes": "Yes, send to Trash",
   "confirm.no": "Cancel",
   "confirm.deleting": "Sending to Trash…",
   "confirm.successTitle": "Success",
-  "confirm.success": "Freed {size} across {count} items.",
-  "confirm.successDryRun": "Dry-run complete — would free {size} across {count} items. Nothing was moved.",
+  "confirm.success": "Moved {size} across {count} items to the Trash. Empty the Trash to reclaim the space, or use Put Back in Finder to restore.",
+  "confirm.successDryRun": "Preview complete — would move {size} across {count} items to the Trash. Nothing was moved.",
   "confirm.failTitle": "Could not send to Trash",
   "confirm.failAll": "None of the {count} items could be moved. macOS denied access (permission, iCloud, or in use).",
   "confirm.partialTitle": "Partially done",
-  "confirm.partial": "Freed {size} ({count} items). {failed} could not be moved.",
+  "confirm.partial": "Moved {size} ({count} items) to the Trash. {failed} could not be moved.",
   "confirm.nextList": "enter / esc  ·  back to the list",
   "confirm.nextMenu": "m            ·  main menu",
   "confirm.nextMenuOnly": "enter / esc  ·  main menu",
-
   "empty.title": "Empty Trash?",
   "empty.extra": "This permanently deletes everything in Trash. Finder cannot undo it.",
   "empty.summary": "You are about to permanently free {size} from Trash — continue?",
@@ -56,7 +52,6 @@
   "empty.alreadyEmpty": "Trash is already empty.",
   "empty.measuring": "Checking Trash size…",
   "empty.fail": "Could not empty Trash.",
-
   "largest.hint": "↑↓ move  space toggle  a select all  o reveal  enter delete  r rescan  esc back",
   "largest.open": "Open",
   "largest.delete": "Delete",
@@ -64,7 +59,6 @@
   "largest.scanning": "Finding largest files…",
   "largest.done": "Top {count} files",
   "largest.selectAll": "Select all",
-
   "settings.language": "Language",
   "settings.staleDays": "node_modules staleness (days)",
   "settings.scanRoot": "Scan root",
@@ -73,7 +67,6 @@
   "settings.largestN": "Largest files count",
   "settings.hint": "↑↓ move  enter edit/toggle  esc back",
   "settings.saved": "Saved",
-
   "scanners.nodeModules": "node_modules",
   "scanners.npmCache": "npm cache",
   "scanners.yarnCache": "Yarn cache",
@@ -90,6 +83,7 @@
   "scanners.systemCachesAndLogs": "Mac caches & logs",
   "scanners.trashBin": "Trash",
   "scanners.largestFiles": "Largest files",
-
-  "test.onlyInEn": "english-only-key"
+  "test.onlyInEn": "english-only-key",
+  "app.previewHint": "Preview mode: nothing will be moved. When you are ready, restart with: bizzi-mac-cleaner --no-dry-run",
+  "confirm.keys": "y · {yes}    n / esc · {no}"
 }

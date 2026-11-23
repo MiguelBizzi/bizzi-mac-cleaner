@@ -25,6 +25,25 @@ export function pathsToAudit(target: string): string[] {
   }
 }
 
+/** macOS "packages": directories that are one logical document/library. Never offer their innards. */
+export const PACKAGE_EXTENSIONS = new Set([
+  "app", "photoslibrary", "sparsebundle", "utm", "fcpbundle", "logicx", "tvlibrary",
+  "imovielibrary", "musiclibrary", "band", "framework", "bundle", "vmwarevm", "pvm",
+  "vbox", "xcodeproj", "xcworkspace", "playground", "rtfd", "pages", "numbers", "key",
+  "scriv", "lrdata", "cocatalog", "sketchlibrary", "photolibrary", "aplibrary", "theater",
+  "plugin", "kext", "xcarchive", "xcassets",
+]);
+
+export function isPackageName(name: string): boolean {
+  const dot = name.lastIndexOf(".");
+  if (dot <= 0) return false;
+  return PACKAGE_EXTENSIONS.has(name.slice(dot + 1).toLowerCase());
+}
+
+export function isInsidePackage(target: string): boolean {
+  return path.resolve(target).split(path.sep).some(isPackageName);
+}
+
 export function isInsideRoot(target: string, root: string): boolean {
   const resolved = path.resolve(target);
   const resolvedRoot = path.resolve(root);

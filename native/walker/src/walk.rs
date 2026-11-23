@@ -37,6 +37,26 @@ const NODE_MODULES_SKIP: &[&str] = &[
     "System",
 ];
 
+/// Directory "packages" (macOS bundles / libraries). Removing one inner file
+/// corrupts the whole package, so the largest-files scan never descends into them.
+const PACKAGE_EXTENSIONS: &[&str] = &[
+    "app", "photoslibrary", "sparsebundle", "utm", "fcpbundle", "logicx", "tvlibrary",
+    "imovielibrary", "musiclibrary", "band", "framework", "bundle", "vmwarevm", "pvm",
+    "vbox", "xcodeproj", "xcworkspace", "playground", "rtfd", "pages", "numbers", "key",
+    "scriv", "lrdata", "cocatalog", "sketchlibrary", "photolibrary", "aplibrary", "theater",
+    "plugin", "kext", "xcarchive", "xcassets",
+];
+
+fn is_package_name(name: &str) -> bool {
+    match name.rsplit_once('.') {
+        Some((stem, ext)) if !stem.is_empty() => {
+            let ext = ext.to_ascii_lowercase();
+            PACKAGE_EXTENSIONS.contains(&ext.as_str())
+        }
+        _ => false,
+    }
+}
+
 const LARGEST_FILES_SKIP: &[&str] = &[
     ".Trash",
     ".git",
@@ -423,6 +443,9 @@ fn walk_largest(
             continue;
         }
         if entry.is_dir {
+            if is_package_name(&entry.name) {
+                continue;
+            }
             subdirs.push(entry.path);
             continue;
         }
@@ -629,5 +652,18 @@ mod tests {
         assert_eq!(hits.len(), 1);
         assert!(hits[0].stale);
         assert_eq!(hits[0].size, 4);
+    }
+}
+
+#[cfg(test)]
+mod package_tests {
+    use super::is_package_name;
+
+    #[test]
+    fn detects_packages() {
+        assert!(is_package_name("Photos Library.photoslibrary"));
+        assert!(is_package_name("Foo.APP"));
+        assert!(!is_package_name("movie.mov"));
+        assert!(!is_package_name(".app"));
     }
 }
