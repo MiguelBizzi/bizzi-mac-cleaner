@@ -27,7 +27,7 @@ Every target in the catalog has exactly one safety level. These definitions are 
 - **advisory**: reclaimable only through macOS or the owning tool. Shown with size and the official command; never deleted by us.
 - **never**: deleting breaks macOS, an app, sync, or destroys user data. Hard-denied for every category.
 
-Rules that follow from the levels:
+Design contract for the engine. These rules describe the behaviour the engine is being built to enforce; later implementation tasks encode them, and they are not claims about code that already ships:
 
 1. **The never-deny rule.** A `never` target wins over every allow rule, for every cleanup category. If a path matches both a deletable pattern and a `never` pattern, it is refused.
 2. **Trash only.** Deletions go through the Trash (`deleteSafely()` then `trash()`). We never call `fs.rm`, so the user can always put an item back until they empty the Trash.
@@ -40,19 +40,19 @@ Rules that follow from the levels:
 
 | macOS | Storage settings path | App container data protection | Group container protection | Apple Intelligence assets |
 |---|---|---|---|---|
-| 12 Monterey | About This Mac › Storage › Manage | No | No | No |
-| 13 Ventura | System Settings › General › Storage | No | No | No |
-| 14 Sonoma | System Settings › General › Storage | Yes | No | No |
-| 15 Sequoia | System Settings › General › Storage | Yes | Yes | Yes, from 15.1 |
-| 26 Tahoe | System Settings › General › Storage | Yes | Yes | Yes |
-| 27 | System Settings › General › Storage | Yes | Yes | Yes |
+| 12 Monterey | About This Mac › Storage › Manage* | No | No | No |
+| 13 Ventura | System Settings › General › Storage* | No | No | No |
+| 14 Sonoma | System Settings › General › Storage* | Yes | No | No |
+| 15 Sequoia | System Settings › General › Storage | Yes | Yes | Yes*, from 15.1 |
+| 26 Tahoe | System Settings › General › Storage* | Yes* | Yes* | Yes* |
+| 27 | System Settings › General › Storage* | Yes* | Yes* | Yes (Apple Support 121115) |
 
 Notes:
 
 - Container protection: introduced in WWDC23 "What's new in privacy" (macOS 14). An app needs the user's permission to read another developer's app data container; the same Team ID is exempt.
 - Group container protection: introduced in WWDC24 "What's new in privacy" (macOS 15).
-- Apple Intelligence on-device assets: available from macOS 15.1. They live in system-managed storage and cannot be measured without admin rights.
-- The storage settings path for 13 and later is as given in the project brief; the 12 path is the older About This Mac window. Rows 26 and 27 were not re-checked against Apple pages; 27 is the version of the machine used for verification.
+- Apple Intelligence on-device assets: Apple's support article (source 12) confirms they take up to 8 GB or 14 GB of on-device storage depending on the Mac and that usage can temporarily exceed this during updates; the macOS 27 page says it requires macOS 27 on M1 or later. The "from 15.1" start is widely reported but we did not verify it from an Apple page. We did not verify that these assets cannot be measured without admin rights; the catalog treats them as advisory because macOS manages them, not because of a measured limit.
+- \* Not independently verified. The Storage settings paths (12: About This Mac › Storage › Manage; 13+: System Settings › General › Storage) come from the project brief, not from an Apple page we checked. The 26 protection cells follow from the 14 and 15 introductions and were not tested on a 26 machine. The 14/15 protection columns are sourced to the WWDC sessions (sources 4 and 5).
 
 ## What we never touch and why
 
@@ -87,6 +87,7 @@ Titles and URLs were checked on 2026-11-23. Where a page title differs slightly 
 9. Docker Docs, "FAQs for Docker Desktop for Mac" (disk image location and size; the plan called it "Disk utilization in Docker Desktop"): https://docs.docker.com/desktop/troubleshoot-and-support/faqs/macfaqs/
 10. Android Developers, "Create and manage virtual devices": https://developer.android.com/studio/run/managing-avds. For the default `~/.android/avd/` location see the avdmanager reference: https://developer.android.com/tools/avdmanager
 11. LM Studio docs, "Import Models" (model folder layout): https://lmstudio.ai/docs/app/advanced/import-model
+12. Apple Support, "Get started with the next generation of Apple Intelligence" (storage figures; macOS 27 page): https://support.apple.com/en-us/121115
 
 ## Verification log
 
@@ -94,7 +95,7 @@ Machine: macOS 27.0.1 (build 26A434), Xcode 26.1.1. Date: 2026-11-23. All comman
 
 ### V1: Other-app container access prompt. doc-verified (not run)
 
-Not run on this machine, to avoid a privacy dialog. From Apple's WWDC23 "What's new in privacy": macOS requires permission before an app reads another developer's app data container (same Team ID exempt; Full Disk Access holders are not prompted again, per a quote of the session transcript on a third-party blog). WWDC24 "What's new in privacy" extends this to group containers. Version boundaries used by the catalog: containers 14+, group containers 15+. A precise "which exact process triggers the prompt from Terminal" test was not performed.
+Not run on this machine, to avoid a privacy dialog. From Apple's WWDC23 "What's new in privacy": macOS requires permission before an app reads another developer's app data container (same Team ID exempt). Whether Full Disk Access holders are exempt from the prompt was not verified from an Apple source, so we make no claim about it. WWDC24 "What's new in privacy" extends this to group containers. Version boundaries used by the catalog: containers 14+, group containers 15+. A precise "which exact process triggers the prompt from Terminal" test was not performed.
 
 ### V2: `plutil -extract ... raw`. verified, with a caveat on dates
 
@@ -163,4 +164,4 @@ LM Studio is not installed here (`~/.lmstudio` and `~/.cache/lm-studio` are abse
 
 ### Other tools
 
-Ollama: not installed; verified from docs, `~/.ollama/models` on macOS (Ollama Local FAQ). Hugging Face: `~/.cache/huggingface` exists on this Mac; default hub cache `~/.cache/huggingface/hub` per the Hugging Face guide. The `HF_HOME` override is not followed. Android emulator: the default AVD folder `~/.android/avd/` comes from the avdmanager reference; the "Create and manage virtual devices" page itself does not state the path. Apple Intelligence asset size cannot be measured without admin rights, so it is advisory only.
+Ollama: not installed; verified from docs, `~/.ollama/models` on macOS (Ollama Local FAQ). Hugging Face: `~/.cache/huggingface` exists on this Mac; default hub cache `~/.cache/huggingface/hub` per the Hugging Face guide. The `HF_HOME` override is not followed. Android emulator: the default AVD folder `~/.android/avd/` comes from the avdmanager reference; the "Create and manage virtual devices" page itself does not state the path. Apple Intelligence assets are advisory only because macOS manages them; we did not verify whether their size is measurable without admin rights.
