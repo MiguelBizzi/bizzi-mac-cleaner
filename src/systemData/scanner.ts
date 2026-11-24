@@ -26,12 +26,16 @@ function needsFda(target: SystemDataTarget, ctx: SystemDataContext): boolean {
   return !from || !ctx.macos || compareVersions(ctx.macos, from) >= 0;
 }
 
-/** Placeholder for a skipped target: the base directory of its first pattern. */
+/** Placeholder for a skipped target: the nearest policy-refused ancestor of its first pattern's base. */
 function advisoryItem(target: SystemDataTarget, root: string): CleanupItem {
   const base = (target.patterns[0] ?? "").split("/").filter(Boolean);
   const i = base.findIndex((s) => s.includes("*") || s === "<uuid>");
   const fixed = i === -1 ? base : base.slice(0, i);
-  const p = path.join(root, ...fixed);
+  // The path must never be one the delete policy would allow: this item was not measured.
+  // Walk up to the nearest ancestor the policy refuses (never the scan root itself).
+  let p = path.join(root, ...fixed);
+  while (p !== path.resolve(root) && categoryViolation("system_data", p, root) === null) p = path.dirname(p);
+  if (p === path.resolve(root)) p = path.join(root, "Library");
   return {
     id: itemId("system_data", `fda:${target.id}`),
     category: "system_data",

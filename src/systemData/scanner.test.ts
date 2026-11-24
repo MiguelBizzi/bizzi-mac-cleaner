@@ -167,4 +167,28 @@ describe("scanDeletableTargets", () => {
     ).map((t) => t.id);
     expect(new Set(deletable.map((i) => i.targetId))).toEqual(new Set(expectedIds));
   });
+
+  it("never gives an advisory item a path the delete policy would allow", async () => {
+    // Denied FDA: every gated target yields an advisory.
+    const denied = await collect(scanDeletableTargets(opts, ctx({ fda: "denied" })));
+    const advisories = denied.filter((i) => i.advisory);
+    expect(advisories.map((i) => i.targetId)).toEqual(
+      expect.arrayContaining(["web.safari_favicons", "mail.downloads", "backups.ios", "caches.container"]),
+    );
+    // TCC-denied readdir of a matched item.
+    vol.fromJSON({ "/h/Library/Caches/com.foo/a": "x" });
+    const real = memfs.promises.readdir.bind(memfs.promises);
+    vi.spyOn(memfs.promises, "readdir").mockImplementation(((p: string, ...rest: unknown[]) => {
+      if (String(p) === "/h/Library/Caches/com.foo") {
+        return Promise.reject(Object.assign(new Error("EPERM"), { code: "EPERM" }));
+      }
+      return (real as (...a: unknown[]) => Promise<unknown>)(p, ...rest);
+    }) as never);
+    const tcc = (await collect(scanDeletableTargets(opts, ctx()))).filter((i) => i.advisory);
+    expect(tcc.length).toBeGreaterThan(0);
+    for (const item of [...advisories, ...tcc]) {
+      expect(categoryViolation("system_data", item.path, "/h"), `${item.targetId} ${item.path}`).not.toBeNull();
+      expect(item.path).not.toBe("/h");
+    }
+  });
 });
