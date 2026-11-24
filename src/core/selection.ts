@@ -85,6 +85,11 @@ export function selectedTotal(
   return { count, bytes };
 }
 
+/** Bytes the app can reclaim: advisory sizes are information only and never counted. */
+export function foundBytes(items: CleanupItem[]): number {
+  return items.reduce((sum, i) => (isSelectable(i) ? sum + i.sizeBytes : sum), 0);
+}
+
 export interface CategoryGroup {
   id: ScannerId;
   items: CleanupItem[];
@@ -101,7 +106,7 @@ export function groupByCategory(items: CleanupItem[]): CategoryGroup[] {
   return [...map.entries()].map(([id, grouped]) => ({
     id,
     items: grouped,
-    bytes: grouped.reduce((sum, i) => sum + i.sizeBytes, 0),
+    bytes: foundBytes(grouped),
   }));
 }
 

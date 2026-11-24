@@ -12,7 +12,8 @@ import {
   categoryCheckState,
   checkGlyph,
   needsExtraConfirm,
-  selectAllInCategory,
+  foundBytes,
+selectAllInCategory,
   selectedItems,
   selectedTotal,
   toggleAll,
@@ -90,7 +91,7 @@ export function ScanScreen({
   const rows = useMemo(() => buildScanRows(items, expanded), [items, expanded]);
   const listHeight = Math.max(6, (stdout.rows || 24) - HEADER_CHROME);
   const totals = selectedTotal(items, selected);
-  const foundBytes = items.reduce((s, i) => s + i.sizeBytes, 0);
+  const found = foundBytes(items);
 
   useEffect(() => {
     setCursor((c) => moveCursor(c, 0, rows.length));
@@ -226,7 +227,7 @@ export function ScanScreen({
             <Spinner type="dots" /> {t("scan.scanning")}
           </Text>
         )}
-        <Text>  {t("scan.total", { size: formatBytes(foundBytes) })}  </Text>
+        <Text>  {t("scan.total", { size: formatBytes(found) })}  </Text>
         <Text dimColor>{t("scan.items", { count: items.length })}</Text>
       </Box>
       {items.length === 0 && done ? <Text dimColor>{t("scan.empty")}</Text> : null}

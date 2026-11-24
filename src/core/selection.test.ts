@@ -4,6 +4,7 @@ import {
   categoryCheckState,
   checkGlyph,
   dockerOrArchives,
+  foundBytes,
   groupByCategory,
   listCheckState,
   needsExtraConfirm,
@@ -121,6 +122,16 @@ describe("selection", () => {
     });
     it("a lone selectable item toggles a mixed category to all", () => {
       expect(categoryCheckState(items, new Set(["a"]), "system_data")).toBe("all");
+    });
+  
+    it("group and found bytes ignore advisories", () => {
+      const mixed = [...items, item({ id: "c", category: "npm_cache", sizeBytes: 5 })];
+      const groups = groupByCategory(mixed);
+      expect(groups.find((g) => g.id === "system_data")!.bytes).toBe(10);
+      expect(foundBytes(mixed)).toBe(15);
+      const only = groupByCategory([items[1]!]);
+      expect(only[0]!.bytes).toBe(0);
+      expect(foundBytes([items[1]!])).toBe(0);
     });
   });
 });
