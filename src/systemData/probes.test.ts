@@ -82,12 +82,28 @@ describe("runningApps / isAppRunning", () => {
     expect(isAppRunning(apps, "folderName", "Google Chrome")).toBe(true);
     expect(isAppRunning(apps, "folderName", "Goog")).toBe(false);
   });
-  it("returns empty sets when both tools fail and never throws", async () => {
+  it("fails closed: ok:false when a tool fails, and every defined check reads as running", async () => {
     vi.mocked(execCommand).mockRejectedValue(new Error("x"));
     const apps = await runningApps();
+    expect(apps).toMatchObject({ ok: false });
     expect(apps.names.size).toBe(0);
     expect(apps.bundleIds.size).toBe(0);
-    expect(isAppRunning(apps, "folderName")).toBe(false);
+    expect(isAppRunning(apps, "folderName", "Discord")).toBe(true);
+    expect(isAppRunning(apps, "bundleIdFolder", "com.x")).toBe(true);
+    expect(isAppRunning(apps, { names: ["x"] })).toBe(true);
+    expect(isAppRunning(apps, undefined)).toBe(false);
+  });
+  it("is ok:false if only one tool fails", async () => {
+    mockExecMap({ "/bin/ps": "/usr/sbin/cfprefsd\n", "/usr/bin/lsappinfo": new Error("t") });
+    expect((await runningApps()).ok).toBe(false);
+  });
+  it("a check that cannot be evaluated (no wildcard value) reads as running", async () => {
+    mockExecMap({ "/bin/ps": "x\n", "/usr/bin/lsappinfo": "" });
+    const apps = await runningApps();
+    expect(apps.ok).toBe(true);
+    expect(isAppRunning(apps, "folderName")).toBe(true);
+    expect(isAppRunning(apps, "bundleIdFolder")).toBe(true);
+    expect(isAppRunning(apps, undefined)).toBe(false);
   });
 });
 

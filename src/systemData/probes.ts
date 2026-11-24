@@ -12,6 +12,8 @@ import type { SystemDataTarget } from "./types.js";
 export interface RunningApps {
   names: Set<string>;
   bundleIds: Set<string>;
+  /** false when ps or lsappinfo failed/timed out: empty sets then mean "unknown", not "nothing running". */
+  ok: boolean;
 }
 
 export async function probeFullDiskAccess(home: string): Promise<"granted" | "denied" | "unknown"> {
@@ -27,6 +29,7 @@ export async function probeFullDiskAccess(home: string): Promise<"granted" | "de
 export async function runningApps(): Promise<RunningApps> {
   const names = new Set<string>();
   const bundleIds = new Set<string>();
+  let ok = true;
   try {
     const { stdout } = await execCommand("/bin/ps", ["-axo", "comm="], { timeout: 5_000 });
     for (const raw of stdout.split("\n")) {
@@ -37,15 +40,15 @@ export async function runningApps(): Promise<RunningApps> {
       for (const m of line.matchAll(/\/([^/]+)\.app(?=\/|$)/g)) names.add(m[1]!.toLowerCase());
     }
   } catch {
-    /* ignore */
+    ok = false;
   }
   try {
     const { stdout } = await execCommand("/usr/bin/lsappinfo", ["list"], { timeout: 5_000 });
     for (const m of stdout.matchAll(/bundleID="([^"]+)"/g)) bundleIds.add(m[1]!.toLowerCase());
   } catch {
-    /* ignore */
+    ok = false;
   }
-  return { names, bundleIds };
+  return { names, bundleIds, ok };
 }
 
 export function isAppRunning(
@@ -54,11 +57,13 @@ export function isAppRunning(
   wildcardValue?: string,
 ): boolean {
   if (check === undefined) return false;
+  // Fail closed: a required check that cannot be evaluated counts as "running".
+  if (!apps.ok) return true;
   if (check === "bundleIdFolder") {
-    return wildcardValue !== undefined && apps.bundleIds.has(wildcardValue.toLowerCase());
+    return wildcardValue === undefined || apps.bundleIds.has(wildcardValue.toLowerCase());
   }
   if (check === "folderName") {
-    if (wildcardValue === undefined) return false;
+    if (wildcardValue === undefined) return true;
     const n = wildcardValue.toLowerCase();
     for (const name of apps.names) if (name === n || name.startsWith(`${n} `)) return true;
     return false;
