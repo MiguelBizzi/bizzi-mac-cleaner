@@ -18,7 +18,6 @@ export type ScannerId =
   | "gradle_cache"
   | "pip_cache"
   | "cargo_cache"
-  | "system_caches_logs"
   | "system_data"
   | "trash_bin"
   | "largest_files";
@@ -45,6 +44,14 @@ export interface CleanupItem {
   risk: Risk;
   /** True when the project root looks untouched for `staleDays` or more. */
   stale?: boolean;
+  /** System Data catalog id (e.g. "caches.app") this item came from. */
+  targetId?: string;
+  /** Synthetic item: informs the user (e.g. needs Full Disk Access); never deletable. */
+  advisory?: boolean;
+  /** Size could not be measured; sizeBytes is not meaningful. */
+  sizeUnknown?: boolean;
+  /** Already-translated short note, e.g. "Slack is running — quit it first". */
+  note?: string;
 }
 
 /**

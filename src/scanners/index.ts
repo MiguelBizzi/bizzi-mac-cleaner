@@ -9,7 +9,7 @@ import { npmCacheScanner } from "./npmCache.js";
 import { pipCacheScanner } from "./pipCache.js";
 import { pnpmCacheScanner } from "./pnpmCache.js";
 import { simulatorCachesScanner } from "./simulatorCaches.js";
-import { systemCachesAndLogsScanner } from "./systemCachesAndLogs.js";
+import { systemDataScanner } from "../systemData/scanner.js";
 import { trashBinScanner } from "./trashBin.js";
 import type { CleanupItem, ScanOptions, Scanner } from "./types.js";
 import { xcodeArchivesScanner } from "./xcodeArchives.js";
@@ -30,7 +30,7 @@ export const cacheScanners: Scanner[] = [
   gradleCacheScanner,
   pipCacheScanner,
   cargoCacheScanner,
-  systemCachesAndLogsScanner,
+  systemDataScanner,
   trashBinScanner,
 ];
 

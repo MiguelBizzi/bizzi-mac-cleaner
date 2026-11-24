@@ -17,7 +17,7 @@ Every scanner ships with a sibling `*.test.ts` that uses `memfs` (no real disk).
 | Gradle | `src/scanners/gradleCache.ts` | `gradleCache.test.ts` | |
 | pip | `src/scanners/pipCache.ts` | `pipCache.test.ts` | |
 | Cargo | `src/scanners/cargoCache.ts` | `cargoCache.test.ts` | `registry/cache` + `registry/src` |
-| System caches & logs | `src/scanners/systemCachesAndLogs.ts` | `systemCachesAndLogs.test.ts` | `~/Library/Caches/*` except other scanners; Logs/Favicon `safe`; HTTPStorages/WebKit/`com.apple.*`/Xcode DeviceSupport `caution` |
+| System Data | `src/systemData/scanner.ts` | `src/systemData/scanner.test.ts` | Catalog-driven (`src/systemData/catalog.ts`): safe/review targets only, FDA-gated targets reported as advisories, running apps and unverified macOS downgrade to `caution` |
 | Trash | `src/scanners/trashBin.ts` | `trashBin.test.ts` | Emptying Trash is permanent; dry-run still applies |
 | Largest files | `src/scanners/largestFiles.ts` | `largestFiles.test.ts` + `core/topN.test.ts` | Live top-N insert |
 
