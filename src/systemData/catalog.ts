@@ -189,6 +189,7 @@ export const TARGETS: readonly SystemDataTarget[] = [
     safety: "advisory",
     patterns: [],
     macos: { min: "15.1" },
+    macosUnverified: true,
     sources: [SRC.appleIntelligence],
   },
 

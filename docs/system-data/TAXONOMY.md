@@ -70,7 +70,7 @@ Every location the System Data engine knows about, grouped as in the app. For wh
 | PyTorch Hub downloads | <code>.cache/torch/hub</code> | Review | any | no | Models and code that torch.hub downloaded. | PyTorch downloads them again when a program asks for them. | Programs that rely on them will download them again, which can be large. | System Data |
 | Whisper model weights | <code>.cache/whisper</code> | Review | any | no | Speech-recognition model files downloaded by Whisper. | Whisper downloads the model again when you use it. | The next transcription waits for the model to download again. | System Data |
 | Ollama models | <code>.ollama/models</code> | Advisory | any | no | Models you pulled with Ollama. Models share data blocks through manifests. |  | Deleting files by hand can break other models that share the same data. Use ollama's own commands. | macOS / owning tool |
-| Apple Intelligence models | n/a | Advisory | 15.1+ | no | On-device models that macOS manages in system storage when Apple Intelligence is on. Which macOS versions have them is not fully verified here. |  | To release the space, turn Apple Intelligence off in System Settings. We may not be able to measure the size without administrator access. | macOS / owning tool |
+| Apple Intelligence models | n/a | Advisory | 15.1+ (unverified) | no | On-device models that macOS manages in system storage when Apple Intelligence is on. Which macOS versions have them is not fully verified here. |  | To release the space, turn Apple Intelligence off in System Settings. We may not be able to measure the size without administrator access. | macOS / owning tool |
 
 ## Device backups
 

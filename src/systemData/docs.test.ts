@@ -25,6 +25,15 @@ describe("generated taxonomy docs", () => {
     }
   });
 
+  it("renders an unverified macOS bound honestly", () => {
+    const flagged = TARGETS.filter((x) => x.macosUnverified);
+    expect(flagged.length).toBeGreaterThan(0);
+    for (const target of flagged) {
+      const line = renderTaxonomyMarkdown().split("\n").find((l) => l.startsWith(`| ${t(`sd.${target.id}.label`)} |`));
+      expect(line).toContain(`${target.macos!.min}+ (unverified)`);
+    }
+  });
+
   it("escapes table cells", () => {
     const rows = renderTaxonomyMarkdown().split("\n").filter((l) => l.startsWith("| "));
     for (const row of rows) expect(row.replace(/\\\|/g, "").split("|").length).toBe(rows[0]!.replace(/\\\|/g, "").split("|").length);

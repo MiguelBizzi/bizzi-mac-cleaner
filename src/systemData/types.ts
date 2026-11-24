@@ -26,6 +26,8 @@ export interface SystemDataTarget {
   /** Documented here, scanned and deleted under another scanner's category. */
   ownedBy?: ScannerId;
   macos?: { min?: string; max?: string };
+  /** The macos bound is not confirmed by Apple documentation; docs render it as unverified. Behaviour is unchanged. */
+  macosUnverified?: boolean;
   /** "required": skip unless FDA granted. { fromMacOS }: required only on that version and later. */
   fda?: "required" | { fromMacOS: string };
   /** How to tell the owning app is running. "bundleIdFolder": the first "*" segment is a bundle id.

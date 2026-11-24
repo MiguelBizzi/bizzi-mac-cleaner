@@ -29,7 +29,7 @@ Update a global install later with `npm update -g bizzi-mac-cleaner`. A bare `np
 
 ## System Data
 
-macOS Storage settings lumps everything it cannot name into "System Data". Bizzi Mac Cleaner finds the large, regenerable parts of it (app and Apple caches, logs, web data, developer artifacts, AI model caches, old device backups and installers, simulator runtimes, local snapshots), explains each one, and sends only what it can justify to the **Trash**. The header shows your macOS version and whether Full Disk Access is granted.
+macOS Storage settings lumps everything it cannot name into "System Data". Bizzi Mac Cleaner finds the large, regenerable parts of it (app and Apple caches, logs, web data, developer artifacts, AI model caches, old device backups and installers, simulator runtimes, local snapshots), explains each one, and sends only what it can justify to the **Trash**. The header shows your macOS version and whether Full Disk Access is granted, not granted or unknown.
 
 Every item has exactly one safety level:
 

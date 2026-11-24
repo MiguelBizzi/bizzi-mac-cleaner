@@ -43,9 +43,10 @@ function scannerLabel(id: string): string {
 
 function macos(target: SystemDataTarget): string {
   const { min, max } = target.macos ?? {};
-  if (min && max) return `${min} to ${max}`;
-  if (min) return `${min}+`;
-  if (max) return `up to ${max}`;
+  const mark = target.macosUnverified ? " (unverified)" : "";
+  if (min && max) return `${min} to ${max}${mark}`;
+  if (min) return `${min}+${mark}`;
+  if (max) return `up to ${max}${mark}`;
   return "any";
 }
 

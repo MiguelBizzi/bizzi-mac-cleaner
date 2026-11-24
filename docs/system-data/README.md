@@ -27,7 +27,7 @@ Every target in the catalog has exactly one safety level. These definitions are 
 - **advisory**: reclaimable only through macOS or the owning tool. Shown with size and the official command; never deleted by us.
 - **never**: deleting breaks macOS, an app, sync, or destroys user data. Hard-denied for every category.
 
-Design contract for the engine. These rules describe the behaviour the engine is being built to enforce; later implementation tasks encode them, and they are not claims about code that already ships:
+Design contract for the engine. These rules describe behaviour the shipped engine enforces; the facts it depends on that we could not confirm (for example the macOS version where Apple Intelligence assets start, marked unverified in the catalog) stay hedged in the text and in the generated taxonomy:
 
 1. **The never-deny rule.** A `never` target wins over every allow rule, for every cleanup category. If a path matches both a deletable pattern and a `never` pattern, it is refused.
 2. **Trash only.** Deletions go through the Trash (`deleteSafely()` then `trash()`). We never call `fs.rm`, so the user can always put an item back until they empty the Trash.
