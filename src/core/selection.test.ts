@@ -7,7 +7,9 @@ import {
   groupByCategory,
   listCheckState,
   needsExtraConfirm,
+  isSelectable,
   selectAllInCategory,
+  selectedItems,
   selectedTotal,
   toggleAll,
   toggleId,
@@ -26,9 +28,10 @@ function item(partial: Partial<CleanupItem> & Pick<CleanupItem, "id" | "category
 describe("selection", () => {
   it("toggles ids on and off", () => {
     let set = new Set<string>();
-    set = toggleId(set, "a");
+    const items = [item({ id: "a", category: "npm_cache" })];
+    set = toggleId(set, "a", items);
     expect(set.has("a")).toBe(true);
-    set = toggleId(set, "a");
+    set = toggleId(set, "a", items);
     expect(set.has("a")).toBe(false);
   });
 
@@ -85,5 +88,39 @@ describe("selection", () => {
     expect(dockerOrArchives([item({ id: "1", category: "npm_cache" })])).toBe(false);
     expect(needsExtraConfirm([item({ id: "1", category: "npm_cache", risk: "caution" })])).toBe(true);
     expect(needsExtraConfirm([item({ id: "1", category: "npm_cache", risk: "safe" })])).toBe(false);
+  });
+
+  describe("advisory items", () => {
+    const items = [
+      item({ id: "a", category: "system_data" }),
+      item({ id: "b", category: "system_data", advisory: true, sizeBytes: 99 }),
+    ];
+    it("is not selectable", () => {
+      expect(isSelectable(items[0]!)).toBe(true);
+      expect(isSelectable(items[1]!)).toBe(false);
+    });
+    it("never selects advisory items", () => {
+      expect([...toggleAll(items, new Set())]).toEqual(["a"]);
+      expect(toggleId(new Set(), "b", items).size).toBe(0);
+      expect([...selectAllInCategory(new Set(), items, "system_data")]).toEqual(["a"]);
+    });
+    it("selecting all in an advisory-only category selects nothing", () => {
+      const only = [items[1]!];
+      expect(selectAllInCategory(new Set(), only, "system_data").size).toBe(0);
+      expect(toggleAll(only, new Set()).size).toBe(0);
+      expect(categoryCheckState(only, new Set(), "system_data")).toBe("none");
+      expect(listCheckState(only, new Set())).toBe("none");
+    });
+    it("ignores advisory ids that sneak into the selection", () => {
+      const sel = new Set(["a", "b"]);
+      expect(selectedItems(items, sel).map((i) => i.id)).toEqual(["a"]);
+      expect(selectedTotal(items, sel)).toEqual({ count: 1, bytes: 10 });
+      expect(categoryCheckState(items, sel, "system_data")).toBe("all");
+      expect(toggleAll(items, sel)).toEqual(new Set());
+      expect(toggleId(sel, "a", items)).toEqual(new Set(["b"]));
+    });
+    it("a lone selectable item toggles a mixed category to all", () => {
+      expect(categoryCheckState(items, new Set(["a"]), "system_data")).toBe("all");
+    });
   });
 });

@@ -143,7 +143,7 @@ export function ScanScreen({
     }
     if (input === " ") {
       if (row.type === "item") {
-        setSelected((prev) => toggleId(prev, row.item.id));
+        setSelected((prev) => toggleId(prev, row.item.id, items));
       } else {
         setSelected((prev) => selectAllInCategory(prev, items, row.group.id));
       }

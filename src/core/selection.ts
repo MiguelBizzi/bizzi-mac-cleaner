@@ -1,6 +1,13 @@
 import type { CleanupItem, ScannerId } from "../scanners/types.js";
 
-export function toggleId(selected: Set<string>, id: string): Set<string> {
+/** Advisory rows inform only; they can never be selected or deleted. */
+export function isSelectable(item: CleanupItem): boolean {
+  return !item.advisory;
+}
+
+export function toggleId(selected: Set<string>, id: string, items: CleanupItem[]): Set<string> {
+  const target = items.find((i) => i.id === id);
+  if (target && !isSelectable(target)) return new Set(selected);
   const next = new Set(selected);
   if (next.has(id)) next.delete(id);
   else next.add(id);
@@ -13,7 +20,7 @@ export function selectAllInCategory(
   category: ScannerId,
 ): Set<string> {
   const next = new Set(selected);
-  const inCat = items.filter((i) => i.category === category);
+  const inCat = items.filter((i) => i.category === category && isSelectable(i));
   const allOn = inCat.length > 0 && inCat.every((i) => next.has(i.id));
   for (const item of inCat) {
     if (allOn) next.delete(item.id);
@@ -24,9 +31,10 @@ export function selectAllInCategory(
 
 /** Toggle every item: if all are selected, clear; otherwise select all. */
 export function toggleAll(items: CleanupItem[], selected: Set<string>): Set<string> {
-  const allOn = items.length > 0 && items.every((i) => selected.has(i.id));
+  const pickable = items.filter(isSelectable);
+  const allOn = pickable.length > 0 && pickable.every((i) => selected.has(i.id));
   if (allOn) return new Set();
-  return new Set(items.map((i) => i.id));
+  return new Set(pickable.map((i) => i.id));
 }
 
 export type CheckState = "all" | "none" | "some";
@@ -42,7 +50,7 @@ export function categoryCheckState(
   selected: Set<string>,
   category: ScannerId,
 ): CheckState {
-  const inCat = items.filter((i) => i.category === category);
+  const inCat = items.filter((i) => i.category === category && isSelectable(i));
   if (inCat.length === 0) return "none";
   const n = inCat.filter((i) => selected.has(i.id)).length;
   if (n === 0) return "none";
@@ -51,15 +59,16 @@ export function categoryCheckState(
 }
 
 export function listCheckState(items: CleanupItem[], selected: Set<string>): CheckState {
-  if (items.length === 0) return "none";
-  const n = items.filter((i) => selected.has(i.id)).length;
+  const pickable = items.filter(isSelectable);
+  if (pickable.length === 0) return "none";
+  const n = pickable.filter((i) => selected.has(i.id)).length;
   if (n === 0) return "none";
-  if (n === items.length) return "all";
+  if (n === pickable.length) return "all";
   return "some";
 }
 
 export function selectedItems(items: CleanupItem[], selected: Set<string>): CleanupItem[] {
-  return items.filter((i) => selected.has(i.id));
+  return items.filter((i) => isSelectable(i) && selected.has(i.id));
 }
 
 export function selectedTotal(
@@ -69,7 +78,7 @@ export function selectedTotal(
   let count = 0;
   let bytes = 0;
   for (const item of items) {
-    if (!selected.has(item.id)) continue;
+    if (!isSelectable(item) || !selected.has(item.id)) continue;
     count += 1;
     bytes += item.sizeBytes;
   }

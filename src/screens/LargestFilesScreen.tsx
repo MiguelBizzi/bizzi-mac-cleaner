@@ -126,7 +126,7 @@ export function LargestFilesScreen(): React.ReactElement {
         setSelected((prev) => toggleAll(items, prev));
       } else {
         const item = items[cursor - 1];
-        if (item) setSelected((prev) => toggleId(prev, item.id));
+        if (item) setSelected((prev) => toggleId(prev, item.id, items));
       }
       return;
     }

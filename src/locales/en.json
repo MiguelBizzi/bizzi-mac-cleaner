@@ -86,6 +86,8 @@
   "test.onlyInEn": "english-only-key",
   "app.previewHint": "Preview mode: nothing will be moved. When you are ready, restart with: bizzi-mac-cleaner --no-dry-run",
   "confirm.keys": "y · {yes}    n / esc · {no}",
+  "sd.snapshots.count": "{count} local snapshot(s), oldest {oldest}",
+  "sd.runtime.lastUsed": "Last used {date}",
   "sd.needsFda": "Needs Full Disk Access to read this",
   "sd.appRunning": "{app} is running — quit it first",
   "sd.group.user_caches": "User caches",

@@ -85,6 +85,8 @@
   "scanners.largestFiles": "Maiores arquivos",
   "app.previewHint": "Modo prévia: nada será movido. Quando quiser, reinicie com: bizzi-mac-cleaner --no-dry-run",
   "confirm.keys": "y · {yes}    n / esc · {no}",
+  "sd.snapshots.count": "{count} snapshot(s) local(is), o mais antigo de {oldest}",
+  "sd.runtime.lastUsed": "Último uso em {date}",
   "sd.needsFda": "Precisa de Acesso Total ao Disco para ler isto",
   "sd.appRunning": "{app} está aberto — feche-o primeiro",
   "sd.group.user_caches": "Caches do usuário",
