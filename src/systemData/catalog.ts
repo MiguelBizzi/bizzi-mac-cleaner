@@ -352,7 +352,11 @@ export function targetById(id: string): SystemDataTarget | undefined {
   return TARGETS.find((t) => t.id === id);
 }
 
-/** First safe/review target (not owned by another scanner) whose relative pattern matches `rel`. */
+/**
+ * First safe/review target (not owned by another scanner) whose relative pattern matches `rel`.
+ * Ignores the never list by design: callers MUST consult `findNeverTarget` first
+ * (`categoryViolation` does, for every category).
+ */
 export function findDeletableTarget(rel: string[]): SystemDataTarget | undefined {
   return TARGETS.find(
     (t) =>
@@ -362,12 +366,17 @@ export function findDeletableTarget(rel: string[]): SystemDataTarget | undefined
   );
 }
 
-/** First never target matching: relative patterns against `rel`, absolute ones against `absolute`. */
+/**
+ * First never target matching: relative patterns against `rel`, absolute ones against `absolute`.
+ * Case-insensitive: APFS is case-insensitive by default, so "library/mobile documents" is the
+ * same folder as "Library/Mobile Documents" and must not slip past the deny list.
+ */
 export function findNeverTarget(rel: string[], absolute: string): SystemDataTarget | undefined {
-  const absSegs = absolute.split("/").filter((s) => s !== "");
+  const absSegs = absolute.split("/").filter((s) => s !== "").map((s) => s.toLowerCase());
+  const relSegs = rel.map((s) => s.toLowerCase());
   return TARGETS.find(
     (t) =>
       t.safety === "never" &&
-      t.patterns.some((p) => matchPattern(p, p.startsWith("/") ? absSegs : rel)),
+      t.patterns.some((p) => matchPattern(p.toLowerCase(), p.startsWith("/") ? absSegs : relSegs)),
   );
 }
