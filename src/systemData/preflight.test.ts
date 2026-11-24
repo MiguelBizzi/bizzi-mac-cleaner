@@ -74,10 +74,6 @@ describe("systemDataPreflight", () => {
     expect(await systemDataPreflight(item({}), "/h", noApps)).not.toBeNull();
   });
 
-  it("refuses a directory target that became a file", async () => {
-    vol.fromJSON({ "/h/Library/Logs/a": "now a file" });
-    expect(await systemDataPreflight(item({ targetId: "logs.user" }), "/h", noApps)).not.toBeNull();
-  });
 
   it("refuses a path that became a symlink", async () => {
     vol.fromJSON({ "/elsewhere/f": "x" });
@@ -98,5 +94,29 @@ describe("systemDataPreflight", () => {
   it("refuses a path outside the root", async () => {
     vol.fromJSON({ "/other/a/f": "x" });
     expect(await systemDataPreflight(item({ targetId: "logs.user", path: "/other/a" }), "/h", noApps)).not.toBeNull();
+  });
+
+  it("allows a loose file under a wildcard-last pattern (Library/Logs/*)", async () => {
+    vol.fromJSON({ "/h/Library/Logs/a": "x" });
+    expect(await systemDataPreflight(item({ targetId: "logs.user" }), "/h", noApps)).toBeNull();
+  });
+
+  it("still runs the running check for a loose file under caches.app", async () => {
+    vol.fromJSON({ "/h/Library/Caches/com.x.y": "x" });
+    const it = item({ targetId: "caches.app", path: "/h/Library/Caches/com.x.y" });
+    expect(await systemDataPreflight(it, "/h", noApps)).toBeNull();
+    expect(await systemDataPreflight(it, "/h", apps({ bundleIds: new Set(["com.x.y"]) }))).toMatch(/running/i);
+  });
+
+  it("refuses a literal-last-segment target that turned from dir into a file", async () => {
+    vol.fromJSON({ "/h/Library/WebKit": "now a file" });
+    expect(await systemDataPreflight(item({ targetId: "web.webkit", path: "/h/Library/WebKit" }), "/h", noApps)).not.toBeNull();
+  });
+
+  it("refuses a symlink even under a wildcard-last pattern", async () => {
+    vol.fromJSON({ "/elsewhere/f": "x" });
+    vol.mkdirSync("/h/Library/Logs", { recursive: true });
+    memfs.symlinkSync("/elsewhere/f", "/h/Library/Logs/a");
+    expect(await systemDataPreflight(item({ targetId: "logs.user" }), "/h", noApps)).not.toBeNull();
   });
 });

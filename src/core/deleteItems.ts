@@ -1,6 +1,7 @@
 import { t } from "./i18n.js";
 import { systemDataPreflight } from "../systemData/preflight.js";
 import { runningApps, type RunningApps } from "../systemData/probes.js";
+import { allowShellDiscovery } from "../scanners/helpers.js";
 import type { CleanupItem } from "../scanners/types.js";
 import { deleteSafely, emptyTrash, type DeleteRequest } from "./deleteSafely.js";
 
@@ -59,7 +60,9 @@ async function runBatch(
   const notStarted: CleanupItem[] = [];
   // One probe per batch, fresh (never the scan-time cache): the delete-time check of running apps.
   let appsOnce: Promise<RunningApps> | undefined;
-  const apps = (): Promise<RunningApps> => (appsOnce ??= runningApps());
+  const apps = (): Promise<RunningApps> => (appsOnce ??= allowShellDiscovery(root)
+    ? runningApps()
+    : Promise.resolve({ names: new Set<string>(), bundleIds: new Set<string>(), ok: true }));
   for (const item of items) {
     if (stopRequested) {
       notStarted.push(item);

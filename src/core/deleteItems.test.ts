@@ -20,6 +20,9 @@ vi.mock("../systemData/probes.js", async (orig) => ({
   runningApps: vi.fn().mockResolvedValue({ names: new Set(), bundleIds: new Set(), ok: true }),
 }));
 
+vi.mock("../scanners/helpers.js", () => ({ allowShellDiscovery: vi.fn().mockReturnValue(true) }));
+
+import { allowShellDiscovery } from "../scanners/helpers.js";
 import { runningApps } from "../systemData/probes.js";
 import { deleteItems, drainDeletes, requestStopDeleting, resetStopForTests } from "./deleteItems.js";
 import { deleteSafely, emptyTrash } from "./deleteSafely.js";
@@ -40,6 +43,7 @@ describe("deleteItems", () => {
     vi.clearAllMocks();
     resetStopForTests();
     vol.reset();
+    vi.mocked(allowShellDiscovery).mockReturnValue(true);
   });
 
   it("stops between items once a stop is requested and reports the rest as untouched", async () => {
@@ -129,6 +133,14 @@ describe("deleteItems", () => {
       });
       await deleteItems([sd(), sd({ path: "/fixture/Library/Caches/b" }), sd({ path: "/fixture/Library/Caches/c" })], "/fixture");
       expect(runningApps).toHaveBeenCalledTimes(1);
+    });
+
+    it("never probes running apps for a non-home root", async () => {
+      vi.mocked(allowShellDiscovery).mockReturnValue(false);
+      vol.fromJSON({ "/fixture/Library/Caches/com.slack.x/f": "x" });
+      const result = await deleteItems([sd()], "/fixture");
+      expect(runningApps).not.toHaveBeenCalled();
+      expect(result.succeeded).toHaveLength(1);
     });
 
     it("does not probe running apps for non-system_data batches", async () => {

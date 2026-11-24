@@ -5,8 +5,12 @@ import { targetById } from "./catalog.js";
 import { firstWildcardValue, matchPattern, relSegments } from "./match.js";
 import { isAppRunning, type RunningApps } from "./probes.js";
 
-/** Catalog patterns whose matches are files; every other scanned item is a directory. */
-const FILE_PATTERN = /\.ipsw$/i;
+/** Expected kind of an item from the pattern that matched it. Wildcard-last patterns also yield loose files. */
+function expectedKind(pattern: string): "dir" | "file" | "either" {
+  const last = pattern.split("/").filter(Boolean).pop() ?? "";
+  if (/\.ipsw$/i.test(last)) return "file";
+  return last.includes("*") || last === "<uuid>" ? "either" : "dir";
+}
 
 /**
  * Delete-time safety net for a scan-time snapshot. Returns a translated refusal, or null
@@ -32,7 +36,9 @@ export async function systemDataPreflight(
   } catch {
     return t("sd.preflight.gone");
   }
-  if (st.isSymbolicLink() || st.isDirectory() === FILE_PATTERN.test(pattern)) return t("sd.preflight.changed");
+  const kind = expectedKind(pattern);
+  const kindOk = kind === "either" || st.isDirectory() === (kind === "dir");
+  if (st.isSymbolicLink() || !kindOk) return t("sd.preflight.changed");
 
   if (target.runningCheck !== undefined) {
     const value = firstWildcardValue(pattern, rel);
