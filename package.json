@@ -26,6 +26,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "fixture": "tsx scripts/generate-fixture.ts",
+    "docs:system-data": "tsx scripts/generate-system-data-docs.ts",
     "audit:prod": "npm audit --omit=dev",
     "prepublishOnly": "npm test && npm run build"
   },

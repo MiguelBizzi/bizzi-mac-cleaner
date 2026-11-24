@@ -1,6 +1,6 @@
 # System Data on macOS: expert guide
 
-This guide explains what macOS calls "System Data", how Bizzi Mac Cleaner decides what is safe to remove, and how we verified the facts the catalog depends on. The catalog in `src/systemData/catalog.ts` encodes this document.
+This guide explains what macOS calls "System Data", how Bizzi Mac Cleaner decides what is safe to remove, and how we verified the facts the catalog depends on. The catalog in `src/systemData/catalog.ts` encodes this document. The generated, always-in-sync table of every target is in [TAXONOMY.md](./TAXONOMY.md) (`npm run docs:system-data`).
 
 ## What "System Data" is
 
