@@ -7,7 +7,7 @@ export function isSelectable(item: CleanupItem): boolean {
 
 export function toggleId(selected: Set<string>, id: string, items: CleanupItem[]): Set<string> {
   const target = items.find((i) => i.id === id);
-  if (target && !isSelectable(target)) return new Set(selected);
+  if (!target || !isSelectable(target)) return selected;
   const next = new Set(selected);
   if (next.has(id)) next.delete(id);
   else next.add(id);

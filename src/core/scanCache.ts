@@ -1,6 +1,6 @@
 import type { CleanupItem } from "../scanners/types.js";
 
-export type ScanCacheId = "scan" | "nodeModules" | "largest";
+export type ScanCacheId = "scan" | "nodeModules" | "largest" | "systemData";
 
 export interface ScanSnapshot {
   items: CleanupItem[];

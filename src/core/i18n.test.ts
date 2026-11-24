@@ -32,4 +32,10 @@ describe("i18n", () => {
     expect(t("scan.hint")).toContain("r rescan");
     expect(t("largest.hint")).toContain("r rescan");
   });
+
+  it("documents the explain shortcut on the scan screen in every locale", () => {
+    expect(t("scan.hint")).toContain("? explain");
+    setLocale("pt");
+    expect(t("scan.hint")).toContain("? explicar");
+  });
 });

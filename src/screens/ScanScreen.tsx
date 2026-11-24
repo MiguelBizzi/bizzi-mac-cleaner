@@ -11,9 +11,9 @@ import { buildScanRows, followScroll, moveCursor } from "../core/scanView.js";
 import {
   categoryCheckState,
   checkGlyph,
-  needsExtraConfirm,
   foundBytes,
-selectAllInCategory,
+  needsExtraConfirm,
+  selectAllInCategory,
   selectedItems,
   selectedTotal,
   toggleAll,
@@ -22,16 +22,20 @@ selectAllInCategory,
 import { clearScreen } from "../core/terminal.js";
 import { cacheScanners, runScanners, scannerById } from "../scanners/index.js";
 import type { CleanupItem, Scanner } from "../scanners/types.js";
+import { explainItem, itemRowView } from "../systemData/explain.js";
 import { ConfirmDeleteModal } from "./ConfirmDeleteModal.js";
+import { ExplainBox } from "./ExplainBox.js";
 
 const HEADER_CHROME = 8;
 
 export function ScanScreen({
   scanners = cacheScanners,
   cacheId = "scan",
+  header,
 }: {
   scanners?: Scanner[];
   cacheId?: ScanCacheId;
+  header?: React.ReactNode | ((items: CleanupItem[]) => React.ReactNode);
 }): React.ReactElement {
   const { root, config, navigate, getScanCache, setScanCache } = useAppContext();
   const { stdout } = useStdout();
@@ -50,6 +54,7 @@ export function ScanScreen({
   const [pending, setPending] = useState<CleanupItem[]>([]);
   const [queue, setQueue] = useState<CleanupItem[] | null>(null);
   const [failures, setFailures] = useState<DeleteFailure[]>([]);
+  const [explain, setExplain] = useState(false);
 
   useEffect(() => {
     if (scanNonce === 0 && skipInitialScan.current) return;
@@ -121,6 +126,10 @@ export function ScanScreen({
     }
     if (input === "a") {
       setSelected((prev) => toggleAll(items, prev));
+      return;
+    }
+    if (input === "?") {
+      setExplain((e) => !e);
       return;
     }
     if (input === "r") {
@@ -217,8 +226,12 @@ export function ScanScreen({
 
   const visible = rows.slice(scroll, scroll + listHeight);
 
+  const cursorRow = rows[cursor];
+  const headerNode = typeof header === "function" ? header(items) : header;
+
   return (
     <Box flexDirection="column">
+      {headerNode}
       <Box>
         {done ? (
           <Text color="green">{t("scan.done")}</Text>
@@ -245,24 +258,35 @@ export function ScanScreen({
             </Text>
           );
         }
-        const mark = selected.has(row.item.id) ? "[x]" : "[ ]";
+        const view = itemRowView(row.item, selected.has(row.item.id));
         const stale =
           row.item.stale === undefined ? "" : row.item.stale ? t("scan.stale") : t("scan.active");
         return (
-          <Text
-            key={row.item.id}
-            inverse={active}
-            color={active ? "black" : selected.has(row.item.id) ? "yellow" : undefined}
-          >
-            {caret}  {mark} {row.item.description ?? row.item.path}  {formatBytes(row.item.sizeBytes)}  {stale}{" "}
-            {t(`scan.${row.item.risk}`)}
-          </Text>
+          <Box key={row.item.id} flexDirection="column">
+            <Text
+              inverse={active}
+              dimColor={view.dim && !active}
+              color={active ? "black" : selected.has(row.item.id) ? "yellow" : undefined}
+            >
+              {caret}  {view.mark} {row.item.description ?? row.item.path}  {view.size}  {stale}{" "}
+              {view.tag}
+            </Text>
+            {row.item.note ? (
+              <Text dimColor>
+                {"        "}
+                {row.item.note}
+              </Text>
+            ) : null}
+          </Box>
         );
       })}
       {rows.length > listHeight ? (
         <Text dimColor>
           {scroll + 1}–{Math.min(scroll + listHeight, rows.length)} / {rows.length}
         </Text>
+      ) : null}
+      {explain && cursorRow?.type === "item" && explainItem(cursorRow.item) ? (
+        <ExplainBox info={explainItem(cursorRow.item)!} />
       ) : null}
       <Box marginTop={1}>
         <Text color="yellow">

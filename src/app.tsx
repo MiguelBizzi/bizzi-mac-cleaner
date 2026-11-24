@@ -12,8 +12,12 @@ import { NodeModulesScreen } from "./screens/NodeModulesScreen.js";
 import { LargestFilesScreen } from "./screens/LargestFilesScreen.js";
 import { EmptyTrashScreen } from "./screens/EmptyTrashScreen.js";
 import { SettingsScreen } from "./screens/SettingsScreen.js";
+import { SystemDataHeader } from "./screens/SystemDataHeader.js";
+import { systemDataScanner } from "./systemData/scanner.js";
 
-export type ScreenName = "menu" | "scan" | "nodeModules" | "largest" | "emptyTrash" | "settings";
+const systemDataScanners = [systemDataScanner];
+
+export type ScreenName = "menu" | "scan" | "systemData" | "nodeModules" | "largest" | "emptyTrash" | "settings";
 
 export interface AppContextValue {
   root: string;
@@ -111,6 +115,13 @@ export function App({ root: initialRoot, dryRun }: AppProps): React.ReactElement
         <Box marginTop={1} flexDirection="column" flexGrow={1}>
           {screen === "menu" ? <MainMenu onQuit={() => exit()} /> : null}
           {screen === "scan" ? <ScanScreen /> : null}
+          {screen === "systemData" ? (
+            <ScanScreen
+              scanners={systemDataScanners}
+              cacheId="systemData"
+              header={(items) => <SystemDataHeader root={root} items={items} />}
+            />
+          ) : null}
           {screen === "nodeModules" ? <NodeModulesScreen /> : null}
           {screen === "largest" ? <LargestFilesScreen /> : null}
           {screen === "emptyTrash" ? <EmptyTrashScreen /> : null}

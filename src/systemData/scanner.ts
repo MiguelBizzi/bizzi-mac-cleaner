@@ -88,7 +88,8 @@ export async function* scanDeletableTargets(
       if (!size || size.bytes <= 0) continue;
       const value = firstWildcardValue(pattern, rel);
       const running = isAppRunning(ctx.apps, target.runningCheck, value);
-      const app = value ?? (typeof target.runningCheck === "object" ? target.runningCheck.names[0] : undefined) ?? "";
+      const app =
+        value ?? (typeof target.runningCheck === "object" ? target.runningCheck.names[0] : undefined) ?? t(`sd.${target.id}.label`);
       const risk: Risk = target.safety === "safe" && ctx.support !== "unverified" && !running ? "safe" : "caution";
       yield {
         id: itemId("system_data", full),
@@ -99,7 +100,7 @@ export async function* scanDeletableTargets(
         description: await describe(target, pattern, rel, full, ctx),
         risk,
         targetId: target.id,
-        ...(running ? { note: t("sd.appRunning", { app }) } : {}),
+        ...(running ? { note: t(ctx.apps.ok ? "sd.appRunning" : "sd.appUnknown", { app }) } : {}),
       };
     }
     if (gated) yield advisoryItem(target, root);

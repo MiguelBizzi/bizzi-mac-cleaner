@@ -36,6 +36,11 @@ describe("selection", () => {
     expect(set.has("a")).toBe(false);
   });
 
+  it("fails closed when the toggled id is not in items", () => {
+    const items = [item({ id: "a", category: "npm_cache" })];
+    expect(toggleId(new Set(), "ghost", items).size).toBe(0);
+  });
+
   it("selects and deselects all items in a category", () => {
     const items = [
       item({ id: "1", category: "npm_cache", sizeBytes: 5 }),
@@ -89,6 +94,11 @@ describe("selection", () => {
     expect(dockerOrArchives([item({ id: "1", category: "npm_cache" })])).toBe(false);
     expect(needsExtraConfirm([item({ id: "1", category: "npm_cache", risk: "caution" })])).toBe(true);
     expect(needsExtraConfirm([item({ id: "1", category: "npm_cache", risk: "safe" })])).toBe(false);
+  });
+
+  it("requires extra confirmation for review-level system data only", () => {
+    expect(needsExtraConfirm([item({ id: "1", category: "system_data", risk: "caution" })])).toBe(true);
+    expect(needsExtraConfirm([item({ id: "1", category: "system_data", risk: "safe" })])).toBe(false);
   });
 
   describe("advisory items", () => {

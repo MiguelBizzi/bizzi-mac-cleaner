@@ -73,6 +73,18 @@ describe("scanDeletableTargets", () => {
     );
     expect(items[0]).toMatchObject({ risk: "caution" });
     expect(items[0]!.note).toBeTruthy();
+    expect(items[0]!.note).not.toContain("is running now");
+    expect(items[0]!.note).toContain("Could not check");
+    expect(items[0]!.note).toContain("com.foo");
+    expect(items[0]!.note).not.toContain("{app}");
+  });
+
+  it("never renders an empty app name in the note", async () => {
+    vol.fromJSON({ "/h/Library/Logs/DiagnosticReports/a.ips": "x" });
+    const items = await collect(
+      scanDeletableTargets(opts, ctx({ apps: { names: new Set(), bundleIds: new Set(), ok: false } })),
+    );
+    for (const i of items) if (i.note) expect(i.note).not.toMatch(/^\s|\s{2}|\{app\}/);
   });
 
   it("turns every safe target into caution on an unverified macOS", async () => {

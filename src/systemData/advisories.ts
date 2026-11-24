@@ -142,7 +142,7 @@ export async function* scanAdvisories(options: ScanOptions, ctx: SystemDataConte
           id,
           `${id}:${rt.identifier}`,
           syntheticPath(root, id, rt.identifier || String(n)),
-          rt.version ? `iOS ${rt.version}` : t(`sd.${id}.label`),
+          rt.version ? t("sd.runtime.label", { version: rt.version }) : t(`sd.${id}.label`),
         ),
         lastModified: rt.lastUsedAt ?? new Date(0),
         sizeBytes: known ? rt.sizeBytes! : 0,
@@ -164,6 +164,7 @@ export async function* scanAdvisories(options: ScanOptions, ctx: SystemDataConte
           /* unreadable: counts as zero */
         }
       }
+      if (signal?.aborted) return;
       yield {
         ...base(id, id, guardedPath(dirs[0], root, id), t(`sd.${id}.label`)),
         sizeBytes: bytes,

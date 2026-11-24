@@ -136,6 +136,31 @@ describe("scanAdvisories", () => {
     for (const i of items) expect(i.path.startsWith("/h/")).toBe(true);
   });
 
+  it("labels simulator runtimes neutrally (the probe has no platform)", async () => {
+    mockExec({ "/usr/bin/xcrun": JSON.stringify({ A: { identifier: "A", version: "18.0" } }) });
+    const items = (await collect(scanAdvisories(opts, ctx({ shell: true })))).filter(
+      (i) => i.targetId === "dev.simulator_runtimes",
+    );
+    expect(items[0]!.description).toBe("Simulator runtime 18.0");
+    expect(items[0]!.description).not.toContain("iOS");
+  });
+
+  it("does not yield a partial var_folders sum once aborted", async () => {
+    vol.fromJSON({ "/private/var/folders/ab/c/C/x": "x".repeat(50) });
+    mockExec({
+      "/usr/bin/getconf DARWIN_USER_CACHE_DIR": "/private/var/folders/ab/c/C/\n",
+      "/usr/bin/getconf DARWIN_USER_TEMP_DIR": "/private/var/folders/ab/c/C/\n",
+    });
+    const ac = new AbortController();
+    const gen = scanAdvisories({ ...opts, signal: ac.signal }, ctx({ shell: true }));
+    const out: Array<{ targetId?: string }> = [];
+    for await (const i of gen) {
+      out.push(i);
+      ac.abort();
+    }
+    expect(out.some((i) => i.targetId === "sys.var_folders")).toBe(false);
+  });
+
   it("sums darwin user dirs for var_folders", async () => {
     vol.fromJSON({
       "/private/var/folders/ab/c/C/x": "x".repeat(50),
