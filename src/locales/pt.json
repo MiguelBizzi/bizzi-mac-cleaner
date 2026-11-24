@@ -53,7 +53,7 @@
   "empty.alreadyEmpty": "O Lixo já está vazio.",
   "empty.measuring": "Medindo o Lixo…",
   "empty.fail": "Não foi possível esvaziar o Lixo.",
-  "largest.hint": "↑↓ mover  espaço marcar  a selecionar todos  o revelar  enter apagar  r reescanear  ? explicar  esc voltar",
+  "largest.hint": "↑↓ mover  espaço marcar  a selecionar todos  o revelar  enter apagar  r reescanear  esc voltar",
   "largest.open": "Abrir",
   "largest.delete": "Apagar",
   "largest.skip": "Pular",

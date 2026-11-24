@@ -38,4 +38,12 @@ describe("i18n", () => {
     setLocale("pt");
     expect(t("scan.hint")).toContain("? explicar");
   });
+
+  it("advertises ? only on screens that handle it", () => {
+    for (const l of ["en", "pt"]) {
+      setLocale(l);
+      expect(t("scan.hint")).toContain("?");
+      expect(t("largest.hint")).not.toContain("?");
+    }
+  });
 });

@@ -53,7 +53,7 @@
   "empty.alreadyEmpty": "Trash is already empty.",
   "empty.measuring": "Checking Trash size…",
   "empty.fail": "Could not empty Trash.",
-  "largest.hint": "↑↓ move  space toggle  a select all  o reveal  enter delete  r rescan  ? explain  esc back",
+  "largest.hint": "↑↓ move  space toggle  a select all  o reveal  enter delete  r rescan  esc back",
   "largest.open": "Open",
   "largest.delete": "Delete",
   "largest.skip": "Skip",
