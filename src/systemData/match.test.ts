@@ -46,6 +46,14 @@ describe("matchPattern", () => {
     expect(matchPattern("a/(b)+/*", ["a", "(b)+", "z"])).toBe(true);
     expect(matchPattern("a/(b)+/*", ["a", "bb", "z"])).toBe(false);
   });
+  it("keeps regex metacharacters literal when mixed with * in one segment", () => {
+    expect(matchPattern("a(b)+*", ["a(b)+xyz"])).toBe(true);
+    expect(matchPattern("a(b)+*", ["a(b)+"])).toBe(true);
+    expect(matchPattern("a(b)+*", ["abbxyz"])).toBe(false);
+    expect(matchPattern("a(b)+*", ["a(b)xyz"])).toBe(false);
+    expect(matchPattern("x.[y]?*", ["x.[y]?z"])).toBe(true);
+    expect(matchPattern("x.[y]?*", ["xa[y]?z"])).toBe(false);
+  });
   it("matches UUID segments only", () => {
     const p = "Library/Developer/CoreSimulator/Devices/<uuid>";
     const base = ["Library", "Developer", "CoreSimulator", "Devices"];

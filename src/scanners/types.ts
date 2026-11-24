@@ -19,6 +19,7 @@ export type ScannerId =
   | "pip_cache"
   | "cargo_cache"
   | "system_caches_logs"
+  | "system_data"
   | "trash_bin"
   | "largest_files";
 
