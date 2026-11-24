@@ -1,3 +1,6 @@
+import { t } from "./i18n.js";
+import { systemDataPreflight } from "../systemData/preflight.js";
+import { runningApps, type RunningApps } from "../systemData/probes.js";
 import type { CleanupItem } from "../scanners/types.js";
 import { deleteSafely, emptyTrash, type DeleteRequest } from "./deleteSafely.js";
 
@@ -54,10 +57,25 @@ async function runBatch(
   const succeeded: CleanupItem[] = [];
   const failed: DeleteFailure[] = [];
   const notStarted: CleanupItem[] = [];
+  // One probe per batch, fresh (never the scan-time cache): the delete-time check of running apps.
+  let appsOnce: Promise<RunningApps> | undefined;
+  const apps = (): Promise<RunningApps> => (appsOnce ??= runningApps());
   for (const item of items) {
     if (stopRequested) {
       notStarted.push(item);
       continue;
+    }
+    // Second wall: the selection layer already blocks advisories, whatever their category.
+    if (item.advisory === true) {
+      failed.push({ item, error: t("sd.preflight.advisory") });
+      continue;
+    }
+    if (item.category === "system_data") {
+      const refusal = await systemDataPreflight(item, root, apps);
+      if (refusal !== null) {
+        failed.push({ item, error: refusal });
+        continue;
+      }
     }
     const req: DeleteRequest = {
       path: item.path,
