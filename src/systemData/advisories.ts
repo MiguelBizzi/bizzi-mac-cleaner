@@ -69,15 +69,19 @@ export async function* scanAdvisories(options: ScanOptions, ctx: SystemDataConte
   if (live("vm.docker_raw")) {
     const tg = target("vm.docker_raw");
     const real = path.join(root, tg.patterns[0]!);
-    try {
-      const st = await fsp.lstat(real);
-      yield {
-        ...base(tg.id, tg.id, guardedPath(real, root, tg.id), t(`sd.${tg.id}.label`)),
-        lastModified: st.mtime,
-        sizeBytes: allocatedBytes(st),
-      };
-    } catch {
-      /* not installed */
+    if (needsFda(tg, ctx) && ctx.fda !== "granted") {
+      yield advisoryItem(tg, root);
+    } else {
+      try {
+        const st = await fsp.lstat(real);
+        yield {
+          ...base(tg.id, tg.id, guardedPath(real, root, tg.id), t(`sd.${tg.id}.label`)),
+          lastModified: st.mtime,
+          sizeBytes: allocatedBytes(st),
+        };
+      } catch {
+        /* not installed */
+      }
     }
   }
 

@@ -5,7 +5,7 @@
 Every location the System Data engine knows about, grouped as in the app. For what the safety levels mean, see the [expert guide](./README.md#the-safety-model).
 
 - **Safe**: Regenerated automatically; removing it costs at most a rebuild or re-download and never loses user data.
-- **Review**: Regenerable, but removal has a visible cost (sign-outs, a multi-GB re-download, lost device symbols, an old backup). Offered, unselected by default, explained.
+- **Review**: Removal has a visible cost, or loses something that cannot be recreated (sign-outs, large re-downloads, device backups, emulator data). Offered, unselected by default, explained.
 - **Advisory**: Reclaimable only through macOS or the owning tool. Shown with its size and the official command; never deleted by us.
 - **Never**: Deleting it breaks macOS, an app or sync, or destroys user data. Always refused.
 
@@ -66,7 +66,7 @@ Every location the System Data engine knows about, grouped as in the app. For wh
 | Target | Location | Safety | macOS | Needs FDA | Why | What regenerates it | Impact of removal | Handled by |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Hugging Face models and datasets | <code>.cache/huggingface/hub/models--*</code><br><code>.cache/huggingface/hub/datasets--*</code> | Review | any | no | One downloaded model or dataset repository per folder in the Hugging Face cache. Custom HF_HOME locations are not followed. | Libraries download them again when a program asks for them. | Re-downloading can take tens of GB for large models. | System Data |
-| LM Studio models | <code>.lmstudio/models/*/*</code><br><code>.cache/lm-studio/models/*/*</code> | Review | any | no | One downloaded model per folder in LM Studio's model library. Custom model folders are not followed. | Download the model again from inside LM Studio. | Large downloads; the model is unavailable until it is fetched again. Quit LM Studio first. | System Data |
+| LM Studio models | <code>.lmstudio/models/*/*</code><br><code>.cache/lm-studio/models/*/*</code> | Review | any | no | One downloaded model per folder in LM Studio's model library. Custom model folders are not followed. | Can usually be downloaded again from inside LM Studio; if you imported it yourself, this may be your only copy. | Large downloads; the model is unavailable until it is fetched again. Quit LM Studio first. | System Data |
 | PyTorch Hub downloads | <code>.cache/torch/hub</code> | Review | any | no | Models and code that torch.hub downloaded. | PyTorch downloads them again when a program asks for them. | Programs that rely on them will download them again, which can be large. | System Data |
 | Whisper model weights | <code>.cache/whisper</code> | Review | any | no | Speech-recognition model files downloaded by Whisper. | Whisper downloads the model again when you use it. | The next transcription waits for the model to download again. | System Data |
 | Ollama models | <code>.ollama/models</code> | Advisory | any | no | Models you pulled with Ollama. Models share data blocks through manifests. |  | Deleting files by hand can break other models that share the same data. Use ollama's own commands. | macOS / owning tool |
@@ -89,7 +89,7 @@ Every location the System Data engine knows about, grouped as in the app. For wh
 
 | Target | Location | Safety | macOS | Needs FDA | Why | What regenerates it | Impact of removal | Handled by |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Docker Desktop disk | <code>Library/Containers/com.docker.docker/Data/vms/0/data/Docker.raw</code> | Advisory | any | no | The single disk file that holds every Docker image, container and volume. The size shown is the space actually allocated, since the file is sparse. |  | Moving it to the Trash destroys all images, containers and volumes. Use docker's own commands to free space. | macOS / owning tool |
+| Docker Desktop disk | <code>Library/Containers/com.docker.docker/Data/vms/0/data/Docker.raw</code> | Advisory | any | from macOS 14 | The single disk file that holds every Docker image, container and volume. The size shown is the space actually allocated, since the file is sparse. |  | Moving it to the Trash destroys all images, containers and volumes. Use docker's own commands to free space. | macOS / owning tool |
 | Colima virtual machines | <code>.colima</code> | Advisory | any | no | The disks and configuration of Colima's virtual machines. |  | Deleting files by hand breaks the VM. Use colima's own commands. | macOS / owning tool |
 
 ## Mail and Messages

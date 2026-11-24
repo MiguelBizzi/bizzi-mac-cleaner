@@ -7,11 +7,12 @@ import { revealInFinder } from "../core/finder.js";
 import { formatBytes } from "../core/format.js";
 import { t } from "../core/i18n.js";
 import { isReusableScan, type ScanCacheId } from "../core/scanCache.js";
-import { buildScanRows, followScroll, moveCursor } from "../core/scanView.js";
+import { buildScanRows, fitRows, followScroll, moveCursor } from "../core/scanView.js";
 import {
   categoryCheckState,
   checkGlyph,
   foundBytes,
+  isSelectable,
   needsExtraConfirm,
   selectAllInCategory,
   selectedItems,
@@ -22,7 +23,7 @@ import {
 import { clearScreen } from "../core/terminal.js";
 import { cacheScanners, runScanners, scannerById } from "../scanners/index.js";
 import type { CleanupItem, Scanner } from "../scanners/types.js";
-import { explainItem, itemRowView } from "../systemData/explain.js";
+import { explainHeight, explainItem, itemRowView } from "../systemData/explain.js";
 import { ConfirmDeleteModal } from "./ConfirmDeleteModal.js";
 import { ExplainBox } from "./ExplainBox.js";
 
@@ -32,10 +33,13 @@ export function ScanScreen({
   scanners = cacheScanners,
   cacheId = "scan",
   header,
+  headerHeight = 0,
 }: {
   scanners?: Scanner[];
   cacheId?: ScanCacheId;
   header?: React.ReactNode | ((items: CleanupItem[]) => React.ReactNode);
+  /** Terminal lines the header takes (subtracted from the list budget). */
+  headerHeight?: number;
 }): React.ReactElement {
   const { root, config, navigate, getScanCache, setScanCache } = useAppContext();
   const { stdout } = useStdout();
@@ -94,7 +98,10 @@ export function ScanScreen({
   }, [root, config.staleDays, scanners, cacheId, scanNonce, setScanCache]);
 
   const rows = useMemo(() => buildScanRows(items, expanded), [items, expanded]);
-  const listHeight = Math.max(6, (stdout.rows || 24) - HEADER_CHROME);
+  const cursorRow = rows[cursor];
+  const explainInfo = explain && cursorRow?.type === "item" ? explainItem(cursorRow.item) : null;
+  const explainLines = explainInfo ? explainHeight(explainInfo, stdout.columns || 80) : 0;
+  const listHeight = Math.max(3, (stdout.rows || 24) - HEADER_CHROME - headerHeight - explainLines);
   const totals = selectedTotal(items, selected);
   const found = foundBytes(items);
 
@@ -224,9 +231,9 @@ export function ScanScreen({
     );
   }
 
-  const visible = rows.slice(scroll, scroll + listHeight);
+  const win = fitRows(rows, scroll, cursor, listHeight);
+  const visible = rows.slice(win.start, win.end);
 
-  const cursorRow = rows[cursor];
   const headerNode = typeof header === "function" ? header(items) : header;
 
   return (
@@ -241,11 +248,11 @@ export function ScanScreen({
           </Text>
         )}
         <Text>  {t("scan.total", { size: formatBytes(found) })}  </Text>
-        <Text dimColor>{t("scan.items", { count: items.length })}</Text>
+        <Text dimColor>{t("scan.items", { count: items.filter(isSelectable).length })}</Text>
       </Box>
       {items.length === 0 && done ? <Text dimColor>{t("scan.empty")}</Text> : null}
       {visible.map((row, offset) => {
-        const i = scroll + offset;
+        const i = win.start + offset;
         const active = i === cursor;
         const caret = active ? "❯ " : "  ";
         if (row.type === "category") {
@@ -254,7 +261,7 @@ export function ScanScreen({
           const check = checkGlyph(categoryCheckState(items, selected, row.group.id));
           return (
             <Text key={row.group.id} inverse={active} color={active ? "black" : check !== "[ ]" ? "yellow" : undefined}>
-              {caret}{check} {open ? "▼" : "▶"} {label}  {formatBytes(row.group.bytes)}  {t("scan.items", { count: row.group.items.length })}
+              {caret}{check} {open ? "▼" : "▶"} {label}  {formatBytes(row.group.bytes)}  {t("scan.items", { count: row.group.items.filter(isSelectable).length })}
             </Text>
           );
         }
@@ -280,14 +287,12 @@ export function ScanScreen({
           </Box>
         );
       })}
-      {rows.length > listHeight ? (
+      {win.start > 0 || win.end < rows.length ? (
         <Text dimColor>
-          {scroll + 1}–{Math.min(scroll + listHeight, rows.length)} / {rows.length}
+          {win.start + 1}–{win.end} / {rows.length}
         </Text>
       ) : null}
-      {explain && cursorRow?.type === "item" && explainItem(cursorRow.item) ? (
-        <ExplainBox info={explainItem(cursorRow.item)!} />
-      ) : null}
+      {explainInfo ? <ExplainBox info={explainInfo} /> : null}
       <Box marginTop={1}>
         <Text color="yellow">
           {t("scan.selected", { size: formatBytes(totals.bytes), count: totals.count })}

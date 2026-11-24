@@ -14,7 +14,8 @@ export interface Explanation {
   regen?: string;
   impact?: string;
   commands?: string[];
-  path: string;
+  /** Absent for advisories: their path is a placeholder, not something to act on. */
+  path?: string;
 }
 
 /** Translation when the key exists, otherwise undefined (t() echoes the key when missing). */
@@ -26,7 +27,8 @@ export function explainItem(item: CleanupItem): Explanation | null {
   if (!item.targetId) return null;
   const target = targetById(item.targetId);
   if (!target) return null;
-  const level = item.advisory ? "advisory" : target.safety;
+  // Effective level: a safe target downgraded to caution (app running, unverified macOS) reads as review.
+  const level = item.advisory ? "advisory" : target.safety === "safe" && item.risk === "caution" ? "review" : target.safety;
   const regen = maybe(`sd.${target.id}.regen`);
   const impact = maybe(`sd.${target.id}.impact`);
   return {
@@ -38,8 +40,23 @@ export function explainItem(item: CleanupItem): Explanation | null {
     ...(regen ? { regen } : {}),
     ...(impact ? { impact } : {}),
     ...(target.commands?.length ? { commands: [...target.commands] } : {}),
-    path: item.path,
+    ...(item.advisory ? {} : { path: item.path }),
   };
+}
+
+/** Lines the ExplainBox takes at `columns` width (border + padding + wrapped text). */
+export function explainHeight(info: Explanation, columns: number): number {
+  const width = Math.max(10, columns - 6);
+  const wrap = (s: string) => Math.max(1, Math.ceil(s.length / width));
+  let h = 2; // border
+  h += wrap(info.title + " · " + info.group);
+  h += wrap(`${t("sd.explain.safety")}: ${info.safety} — ${info.safetyDef}`);
+  h += wrap(`${t("sd.explain.why")}: ${info.why}`);
+  if (info.regen) h += wrap(`${t("sd.explain.regen")}: ${info.regen}`);
+  if (info.impact) h += wrap(`${t("sd.explain.impact")}: ${info.impact}`);
+  if (info.path) h += wrap(`${t("sd.explain.path")}: ${info.path}`);
+  if (info.commands) h += 2 + info.commands.reduce((s, c) => s + wrap("  $ " + c), 0);
+  return h;
 }
 
 export interface SystemDataSummary {

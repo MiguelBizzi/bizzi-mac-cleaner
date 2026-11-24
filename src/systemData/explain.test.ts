@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { t } from "../core/i18n.js";
 import type { CleanupItem } from "../scanners/types.js";
 import type { SystemDataContext } from "./context.js";
-import { confirmImpacts, explainItem, headerLines, itemRowView, summarizeSystemData } from "./explain.js";
+import { confirmImpacts, explainHeight, explainItem, headerLines, itemRowView, summarizeSystemData } from "./explain.js";
 
 let n = 0;
 const item = (p: Partial<CleanupItem> = {}): CleanupItem => ({
@@ -36,6 +36,15 @@ describe("explainItem", () => {
     const e = explainItem(item({ targetId: "snapshots.tm_local", advisory: true }))!;
     expect(e.commands).toContain("tmutil listlocalsnapshots /");
     expect(e.safety).toBe(t("sd.safety.advisory"));
+  });
+  it("shows the review wording when a safe target was downgraded to caution", () => {
+    const e = explainItem(item({ targetId: "caches.app", risk: "caution" }))!;
+    expect(e.safety).toBe(t("sd.safety.review"));
+    expect(e.safetyDef).toBe(t("sd.safety.review.def"));
+    expect(explainItem(item({ targetId: "caches.app", risk: "safe" }))!.safety).toBe(t("sd.safety.safe"));
+  });
+  it("hides the placeholder path for advisories", () => {
+    expect(explainItem(item({ targetId: "snapshots.tm_local", advisory: true }))!.path).toBeUndefined();
   });
   it("returns null without a targetId or for an unknown target", () => {
     expect(explainItem(item())).toBeNull();
@@ -104,5 +113,15 @@ describe("itemRowView", () => {
   it("shows [x]/[ ] for selectable rows", () => {
     expect(itemRowView(item(), true).mark).toBe("[x]");
     expect(itemRowView(item(), false)).toMatchObject({ mark: "[ ]", dim: false });
+  });
+});
+
+describe("explainHeight", () => {
+  it("grows with wrapped text and commands, and never returns less than the border", () => {
+    const info = explainItem(item({ targetId: "snapshots.tm_local", advisory: true }))!;
+    const wide = explainHeight(info, 200);
+    const narrow = explainHeight(info, 40);
+    expect(narrow).toBeGreaterThan(wide);
+    expect(wide).toBeGreaterThanOrEqual(2 + 4 + (info.commands?.length ?? 0));
   });
 });

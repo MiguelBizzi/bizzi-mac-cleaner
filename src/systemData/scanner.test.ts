@@ -135,6 +135,15 @@ describe("scanDeletableTargets", () => {
     expect(items.some((i) => i.path.includes("MyNotes"))).toBe(false);
   });
 
+  it("does not treat a lone Preferences file as a Chromium userData marker", async () => {
+    vol.fromJSON({
+      "/h/Library/Application Support/MyNotes/Preferences": "{}",
+      "/h/Library/Application Support/MyNotes/Cache/real-data.db": "x",
+    });
+    const items = await collect(scanDeletableTargets(opts, ctx()));
+    expect(items.some((i) => i.path.includes("MyNotes"))).toBe(false);
+  });
+
   it("emits the FDA advisory when a matched item cannot be read (TCC), not a zero-size item", async () => {
     vol.fromJSON({ "/h/Library/Caches/com.foo/a": "x" });
     const real = memfs.promises.readdir.bind(memfs.promises);

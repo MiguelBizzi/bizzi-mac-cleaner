@@ -5,6 +5,15 @@ export function isSelectable(item: CleanupItem): boolean {
   return !item.advisory;
 }
 
+/**
+ * What bulk select (`a`, category space) may pick: selectable items, except
+ * review-level System Data, which can hold irreplaceable data (backups, AVDs,
+ * simulator devices) and must be toggled one by one.
+ */
+export function isBulkSelectable(item: CleanupItem): boolean {
+  return isSelectable(item) && !(item.category === "system_data" && item.risk !== "safe");
+}
+
 export function toggleId(selected: Set<string>, id: string, items: CleanupItem[]): Set<string> {
   const target = items.find((i) => i.id === id);
   if (!target || !isSelectable(target)) return selected;
@@ -20,7 +29,7 @@ export function selectAllInCategory(
   category: ScannerId,
 ): Set<string> {
   const next = new Set(selected);
-  const inCat = items.filter((i) => i.category === category && isSelectable(i));
+  const inCat = items.filter((i) => i.category === category && isBulkSelectable(i));
   const allOn = inCat.length > 0 && inCat.every((i) => next.has(i.id));
   for (const item of inCat) {
     if (allOn) next.delete(item.id);
@@ -31,10 +40,12 @@ export function selectAllInCategory(
 
 /** Toggle every item: if all are selected, clear; otherwise select all. */
 export function toggleAll(items: CleanupItem[], selected: Set<string>): Set<string> {
-  const pickable = items.filter(isSelectable);
+  const pickable = items.filter(isBulkSelectable);
   const allOn = pickable.length > 0 && pickable.every((i) => selected.has(i.id));
   if (allOn) return new Set();
-  return new Set(pickable.map((i) => i.id));
+  const next = new Set(selected);
+  for (const i of pickable) next.add(i.id);
+  return next;
 }
 
 export type CheckState = "all" | "none" | "some";
@@ -45,26 +56,26 @@ export function checkGlyph(state: CheckState): string {
   return "[ ]";
 }
 
+/** "all" = every bulk-selectable item picked and nothing else; manual picks outside bulk make it "some". */
+function tri(scope: CleanupItem[], selected: Set<string>): CheckState {
+  const bulk = scope.filter(isBulkSelectable);
+  const manual = scope.filter((i) => isSelectable(i) && !isBulkSelectable(i) && selected.has(i.id)).length;
+  const n = bulk.filter((i) => selected.has(i.id)).length;
+  if (n === 0 && manual === 0) return "none";
+  if (manual === 0 && n === bulk.length) return "all";
+  return "some";
+}
+
 export function categoryCheckState(
   items: CleanupItem[],
   selected: Set<string>,
   category: ScannerId,
 ): CheckState {
-  const inCat = items.filter((i) => i.category === category && isSelectable(i));
-  if (inCat.length === 0) return "none";
-  const n = inCat.filter((i) => selected.has(i.id)).length;
-  if (n === 0) return "none";
-  if (n === inCat.length) return "all";
-  return "some";
+  return tri(items.filter((i) => i.category === category), selected);
 }
 
 export function listCheckState(items: CleanupItem[], selected: Set<string>): CheckState {
-  const pickable = items.filter(isSelectable);
-  if (pickable.length === 0) return "none";
-  const n = pickable.filter((i) => selected.has(i.id)).length;
-  if (n === 0) return "none";
-  if (n === pickable.length) return "all";
-  return "some";
+  return tri(items, selected);
 }
 
 export function selectedItems(items: CleanupItem[], selected: Set<string>): CleanupItem[] {

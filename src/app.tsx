@@ -119,6 +119,7 @@ export function App({ root: initialRoot, dryRun }: AppProps): React.ReactElement
             <ScanScreen
               scanners={systemDataScanners}
               cacheId="systemData"
+              headerHeight={3}
               header={(items) => <SystemDataHeader root={root} items={items} />}
             />
           ) : null}

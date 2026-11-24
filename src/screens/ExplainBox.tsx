@@ -25,9 +25,11 @@ export function ExplainBox({ info }: { info: Explanation }): React.ReactElement 
           {t("sd.explain.impact")}: {info.impact}
         </Text>
       ) : null}
-      <Text dimColor>
-        {t("sd.explain.path")}: {info.path}
-      </Text>
+      {info.path ? (
+        <Text dimColor>
+          {t("sd.explain.path")}: {info.path}
+        </Text>
+      ) : null}
       {info.commands ? (
         <Box flexDirection="column" marginTop={1}>
           <Text color="yellow">{t("sd.explain.commands")}</Text>

@@ -23,7 +23,7 @@ Apple states that when space is needed, macOS clears caches and logs that are sa
 Every target in the catalog has exactly one safety level. These definitions are used word for word in code and docs.
 
 - **safe**: regenerated automatically; removing it costs at most a rebuild/re-download and never loses user data.
-- **review**: regenerable, but removal has a visible cost (sign-outs, multi-GB re-download, lost device symbols, an old backup). Offered, unselected by default, explained.
+- **review**: removal has a visible cost, or loses something that cannot be recreated (sign-outs, large re-downloads, device backups, emulator data). Offered, unselected by default, explained, and never picked by bulk select (`a` / category space): toggle each one yourself.
 - **advisory**: reclaimable only through macOS or the owning tool. Shown with size and the official command; never deleted by us.
 - **never**: deleting breaks macOS, an app, sync, or destroys user data. Hard-denied for every category.
 
@@ -132,7 +132,7 @@ The command exists and returns JSON, but this Mac has no runtimes installed, so 
 
 ### V5: Docker Desktop disk file. doc-verified (not run)
 
-Docker Desktop's CLI is installed (`docker --version`: 24.0.7) but the path lives inside `~/Library/Containers/com.docker.docker`, so we did not `ls`, `du` or `stat` it. The Docker Desktop for Mac FAQ gives the location `~/Library/Containers/com.docker.docker/Data/vms/0/data/Docker.raw`, states that many tools report the maximum file size rather than the actual size, and shows `ls -klsh Docker.raw` for real usage (example: about 2.2 GB used of a 64 GB maximum). So the file is sparse in effect: allocated bytes are far below the apparent size. Whether `stat` on it prompts was not tested; the catalog treats it as protected on 14+ and measures allocated bytes only when access is already available.
+Docker Desktop's CLI is installed (`docker --version`: 24.0.7) but the path lives inside `~/Library/Containers/com.docker.docker`, so we did not `ls`, `du` or `stat` it. The Docker Desktop for Mac FAQ gives the location `~/Library/Containers/com.docker.docker/Data/vms/0/data/Docker.raw`, states that many tools report the maximum file size rather than the actual size, and shows `ls -klsh Docker.raw` for real usage (example: about 2.2 GB used of a 64 GB maximum). So the file is sparse in effect: allocated bytes are far below the apparent size. Whether `stat` on it prompts was not tested; the catalog treats it as FDA-protected from macOS 14 (`fda: { fromMacOS: "14" }`; without FDA the app shows a needs-Full-Disk-Access row instead of reading it) and measures allocated bytes only when access is already available.
 
 ### V6: `lsappinfo list`. verified
 

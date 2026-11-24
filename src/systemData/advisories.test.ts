@@ -13,6 +13,7 @@ vi.mock("../core/shell/exec.js", () => ({ execCommand: vi.fn() }));
 
 import { categoryViolation } from "../core/deletePolicy.js";
 import { fsp } from "../core/fs.js";
+import { t } from "../core/i18n.js";
 import { execCommand } from "../core/shell/exec.js";
 import { collect } from "../test/collect.js";
 import { scanAdvisories } from "./advisories.js";
@@ -61,6 +62,25 @@ describe("scanAdvisories", () => {
     } as never);
     const items = await collect(scanAdvisories(opts, ctx()));
     expect(items.find((i) => i.targetId === "vm.docker_raw")).toMatchObject({ advisory: true, sizeBytes: 9e9 });
+  });
+
+  it("measures Docker.raw on macOS 13 (no FDA gate there)", async () => {
+    vol.fromJSON({ "/h/Library/Containers/com.docker.docker/Data/vms/0/data/Docker.raw": "xx" });
+    const items = await collect(scanAdvisories(opts, ctx({ macos: { major: 13, minor: 6, patch: 0 }, fda: "denied" })));
+    const d = items.find((i) => i.targetId === "vm.docker_raw")!;
+    expect(d.advisory).toBe(true);
+    expect(d.sizeUnknown).toBeFalsy();
+  });
+
+  it("emits the needs-FDA advisory for Docker.raw on 14+ without FDA, without lstat-ing it", async () => {
+    vol.fromJSON({ "/h/Library/Containers/com.docker.docker/Data/vms/0/data/Docker.raw": "xx" });
+    const spy = vi.spyOn(fsp, "lstat");
+    const items = await collect(scanAdvisories(opts, ctx({ macos: { major: 14, minor: 0, patch: 0 }, fda: "denied" })));
+    const d = items.filter((i) => i.targetId === "vm.docker_raw");
+    expect(d).toHaveLength(1);
+    expect(d[0]).toMatchObject({ advisory: true, sizeUnknown: true });
+    expect(d[0]!.note).toBe(t("sd.needsFda"));
+    expect(spy.mock.calls.some(([p]) => String(p).endsWith("Docker.raw"))).toBe(false);
   });
 
   it("emits Apple Intelligence only from 15.1", async () => {

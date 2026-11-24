@@ -101,6 +101,38 @@ describe("selection", () => {
     expect(needsExtraConfirm([item({ id: "1", category: "system_data", risk: "safe" })])).toBe(false);
   });
 
+  describe("bulk select skips review-level system data", () => {
+    const items = [
+      item({ id: "s", category: "system_data", risk: "safe" }),
+      item({ id: "c", category: "system_data", risk: "caution" }),
+      item({ id: "n", category: "npm_cache", risk: "caution" }),
+    ];
+    it("toggleAll selects safe system_data and other categories, never caution system_data", () => {
+      expect([...toggleAll(items, new Set())].sort()).toEqual(["n", "s"]);
+    });
+    it("selectAllInCategory(system_data) selects only the safe items", () => {
+      expect([...selectAllInCategory(new Set(), items, "system_data")]).toEqual(["s"]);
+    });
+    it("other categories still bulk-select caution items", () => {
+      expect([...selectAllInCategory(new Set(), items, "npm_cache")]).toEqual(["n"]);
+    });
+    it("a manually picked caution item survives bulk select and is not cleared by a category toggle", () => {
+      expect(toggleAll(items, new Set(["c"])).has("c")).toBe(true);
+      const all = selectAllInCategory(new Set(["s", "c"]), items, "system_data");
+      expect(all.has("c")).toBe(true);
+      expect(all.has("s")).toBe(false);
+    });
+    it("tri-state glyph matches what bulk select would do", () => {
+      expect(categoryCheckState(items, new Set(["s"]), "system_data")).toBe("all");
+      expect(categoryCheckState(items, new Set(["c"]), "system_data")).toBe("some");
+      expect(categoryCheckState(items, new Set(["s", "c"]), "system_data")).toBe("some");
+      expect(categoryCheckState(items, new Set(), "system_data")).toBe("none");
+      expect(listCheckState(items, new Set(["s", "n"]))).toBe("all");
+      expect(listCheckState(items, new Set(["s", "n", "c"]))).toBe("some");
+      expect(listCheckState(items, new Set(["c"]))).toBe("some");
+    });
+  });
+
   describe("advisory items", () => {
     const items = [
       item({ id: "a", category: "system_data" }),
