@@ -6,13 +6,14 @@ import { useAppContext } from "../app.js";
 
 interface Item {
   label: string;
-  value: "scan" | "nodeModules" | "largest" | "emptyTrash" | "settings" | "quit";
+  value: "scan" | "systemData" | "nodeModules" | "largest" | "emptyTrash" | "settings" | "quit";
 }
 
 export function MainMenu({ onQuit }: { onQuit: () => void }): React.ReactElement {
   const { navigate } = useAppContext();
   const items: Item[] = [
     { label: t("menu.scanCaches"), value: "scan" },
+    { label: t("menu.systemData"), value: "systemData" },
     { label: t("menu.nodeModules"), value: "nodeModules" },
     { label: t("menu.largestFiles"), value: "largest" },
     { label: t("menu.emptyTrash"), value: "emptyTrash" },

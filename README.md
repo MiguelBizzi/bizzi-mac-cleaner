@@ -27,6 +27,23 @@ Update a global install later with `npm update -g bizzi-mac-cleaner`. A bare `np
 - If a scan of `~/Library` is denied, grant Full Disk Access: System Settings → Privacy & Security → Full Disk Access → enable your terminal app.
 - Emptying Trash is permanent and asks Terminal for permission to control Finder (Automation). The tool requires you to type `empty`.
 
+## System Data
+
+macOS Storage settings lumps everything it cannot name into "System Data". Bizzi Mac Cleaner finds the large, regenerable parts of it (app and Apple caches, logs, web data, developer artifacts, AI model caches, old device backups and installers, simulator runtimes, local snapshots), explains each one, and sends only what it can justify to the **Trash**. The header shows your macOS version and whether Full Disk Access is granted, not granted or unknown.
+
+Every item has exactly one safety level:
+
+- **Safe**: Regenerated automatically; removing it costs at most a rebuild or re-download and never loses user data.
+- **Review**: Regenerable, but removal has a visible cost (sign-outs, a multi-GB re-download, lost device symbols, an old backup). Offered, unselected by default, explained.
+- **Advisory**: Reclaimable only through macOS or the owning tool. Shown with its size and the official command; never deleted by us.
+- **Never**: Deleting it breaks macOS, an app or sync, or destroys user data. Always refused.
+
+Never touched, whatever the cleanup category: cloud storage files; account and sync state; active downloads and open documents; personal data and settings; app group containers; VM and model store internals; container folders; macOS system files. Matching these is a hard refusal that wins over every allow rule.
+
+Deletions go to the Trash, so they are recoverable; disk space is only reclaimed once you empty the Trash. On a macOS newer than the newest version we have verified (27), safe items are offered as review instead.
+
+Details: [expert guide and sources](./docs/system-data/README.md) and the [generated taxonomy](./docs/system-data/TAXONOMY.md) of every location, with its safety level and what regenerates it.
+
 ## Usage
 
 ```bash

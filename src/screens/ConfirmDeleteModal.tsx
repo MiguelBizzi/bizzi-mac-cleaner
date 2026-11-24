@@ -11,7 +11,9 @@ import {
 } from "../core/emptyTrashConfirm.js";
 import { formatBytes, truncatePath } from "../core/format.js";
 import { t } from "../core/i18n.js";
+import { confirmKeyAction } from "../core/confirmKeys.js";
 import { dockerOrArchives } from "../core/selection.js";
+import { confirmImpacts } from "../systemData/explain.js";
 import type { CleanupItem } from "../scanners/types.js";
 
 export type ConfirmKind = "delete" | "emptyTrash";
@@ -40,6 +42,7 @@ export function ConfirmDeleteModal({
   const bytes = useMemo(() => items.reduce((s, i) => s + i.sizeBytes, 0), [items]);
   const empty = isEmptyTrashConfirm(kind, items);
   const extra = extraRequired || dockerOrArchives(items) || empty;
+  const impacts = useMemo(() => (empty ? [] : confirmImpacts(items)), [items, empty]);
   const size = formatBytes(bytes);
   const count = items.length;
   const [typed, setTyped] = useState("");
@@ -64,9 +67,10 @@ export function ConfirmDeleteModal({
     }
     // Permanent Empty Trash requires typing the phrase — y/Enter must not suffice.
     if (empty) return;
-    if (input === "n") onCancel();
-    // Enter must NOT confirm: it opens this modal, so a stray/held Enter would delete.
-    if (input === "y") onConfirm();
+    // Only an explicit `y` confirms (never Enter), including for items needing extra confirmation.
+    const action = confirmKeyAction(input, key);
+    if (action === "cancel") onCancel();
+    else if (action === "confirm") onConfirm();
   });
 
   const nextHints = (
@@ -158,6 +162,14 @@ export function ConfirmDeleteModal({
         : null}
       {!empty && items.length > 8 ? (
         <Text dimColor>{t("confirm.more", { count: items.length - 8 })}</Text>
+      ) : null}
+      {impacts.length > 0 ? (
+        <Box flexDirection="column" marginTop={1}>
+          <Text bold>{t("confirm.lose")}</Text>
+          {impacts.map((impact) => (
+            <Text key={impact}>• {impact}</Text>
+          ))}
+        </Box>
       ) : null}
       {empty ? (
         <Box marginTop={1} flexDirection="column">

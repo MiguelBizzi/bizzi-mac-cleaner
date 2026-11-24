@@ -52,6 +52,11 @@ export function t(key: string, vars?: Record<string, string | number>): string {
   return interpolate(value, vars);
 }
 
+/** True when the key exists in the current locale or the en fallback (no warning). */
+export function hasKey(key: string): boolean {
+  return key in (BUNDLED[currentLocale] ?? {}) || key in BUNDLED.en!;
+}
+
 export function resetI18nForTests(): void {
   currentLocale = "en";
 }

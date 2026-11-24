@@ -4,10 +4,13 @@ import {
   categoryCheckState,
   checkGlyph,
   dockerOrArchives,
+  foundBytes,
   groupByCategory,
   listCheckState,
   needsExtraConfirm,
+  isSelectable,
   selectAllInCategory,
+  selectedItems,
   selectedTotal,
   toggleAll,
   toggleId,
@@ -26,10 +29,16 @@ function item(partial: Partial<CleanupItem> & Pick<CleanupItem, "id" | "category
 describe("selection", () => {
   it("toggles ids on and off", () => {
     let set = new Set<string>();
-    set = toggleId(set, "a");
+    const items = [item({ id: "a", category: "npm_cache" })];
+    set = toggleId(set, "a", items);
     expect(set.has("a")).toBe(true);
-    set = toggleId(set, "a");
+    set = toggleId(set, "a", items);
     expect(set.has("a")).toBe(false);
+  });
+
+  it("fails closed when the toggled id is not in items", () => {
+    const items = [item({ id: "a", category: "npm_cache" })];
+    expect(toggleId(new Set(), "ghost", items).size).toBe(0);
   });
 
   it("selects and deselects all items in a category", () => {
@@ -85,5 +94,86 @@ describe("selection", () => {
     expect(dockerOrArchives([item({ id: "1", category: "npm_cache" })])).toBe(false);
     expect(needsExtraConfirm([item({ id: "1", category: "npm_cache", risk: "caution" })])).toBe(true);
     expect(needsExtraConfirm([item({ id: "1", category: "npm_cache", risk: "safe" })])).toBe(false);
+  });
+
+  it("requires extra confirmation for review-level system data only", () => {
+    expect(needsExtraConfirm([item({ id: "1", category: "system_data", risk: "caution" })])).toBe(true);
+    expect(needsExtraConfirm([item({ id: "1", category: "system_data", risk: "safe" })])).toBe(false);
+  });
+
+  describe("bulk select skips review-level system data", () => {
+    const items = [
+      item({ id: "s", category: "system_data", risk: "safe" }),
+      item({ id: "c", category: "system_data", risk: "caution" }),
+      item({ id: "n", category: "npm_cache", risk: "caution" }),
+    ];
+    it("toggleAll selects safe system_data and other categories, never caution system_data", () => {
+      expect([...toggleAll(items, new Set())].sort()).toEqual(["n", "s"]);
+    });
+    it("selectAllInCategory(system_data) selects only the safe items", () => {
+      expect([...selectAllInCategory(new Set(), items, "system_data")]).toEqual(["s"]);
+    });
+    it("other categories still bulk-select caution items", () => {
+      expect([...selectAllInCategory(new Set(), items, "npm_cache")]).toEqual(["n"]);
+    });
+    it("a manually picked caution item survives bulk select and is not cleared by a category toggle", () => {
+      expect(toggleAll(items, new Set(["c"])).has("c")).toBe(true);
+      const all = selectAllInCategory(new Set(["s", "c"]), items, "system_data");
+      expect(all.has("c")).toBe(true);
+      expect(all.has("s")).toBe(false);
+    });
+    it("tri-state glyph matches what bulk select would do", () => {
+      expect(categoryCheckState(items, new Set(["s"]), "system_data")).toBe("all");
+      expect(categoryCheckState(items, new Set(["c"]), "system_data")).toBe("some");
+      expect(categoryCheckState(items, new Set(["s", "c"]), "system_data")).toBe("some");
+      expect(categoryCheckState(items, new Set(), "system_data")).toBe("none");
+      expect(listCheckState(items, new Set(["s", "n"]))).toBe("all");
+      expect(listCheckState(items, new Set(["s", "n", "c"]))).toBe("some");
+      expect(listCheckState(items, new Set(["c"]))).toBe("some");
+    });
+  });
+
+  describe("advisory items", () => {
+    const items = [
+      item({ id: "a", category: "system_data" }),
+      item({ id: "b", category: "system_data", advisory: true, sizeBytes: 99 }),
+    ];
+    it("is not selectable", () => {
+      expect(isSelectable(items[0]!)).toBe(true);
+      expect(isSelectable(items[1]!)).toBe(false);
+    });
+    it("never selects advisory items", () => {
+      expect([...toggleAll(items, new Set())]).toEqual(["a"]);
+      expect(toggleId(new Set(), "b", items).size).toBe(0);
+      expect([...selectAllInCategory(new Set(), items, "system_data")]).toEqual(["a"]);
+    });
+    it("selecting all in an advisory-only category selects nothing", () => {
+      const only = [items[1]!];
+      expect(selectAllInCategory(new Set(), only, "system_data").size).toBe(0);
+      expect(toggleAll(only, new Set()).size).toBe(0);
+      expect(categoryCheckState(only, new Set(), "system_data")).toBe("none");
+      expect(listCheckState(only, new Set())).toBe("none");
+    });
+    it("ignores advisory ids that sneak into the selection", () => {
+      const sel = new Set(["a", "b"]);
+      expect(selectedItems(items, sel).map((i) => i.id)).toEqual(["a"]);
+      expect(selectedTotal(items, sel)).toEqual({ count: 1, bytes: 10 });
+      expect(categoryCheckState(items, sel, "system_data")).toBe("all");
+      expect(toggleAll(items, sel)).toEqual(new Set());
+      expect(toggleId(sel, "a", items)).toEqual(new Set(["b"]));
+    });
+    it("a lone selectable item toggles a mixed category to all", () => {
+      expect(categoryCheckState(items, new Set(["a"]), "system_data")).toBe("all");
+    });
+  
+    it("group and found bytes ignore advisories", () => {
+      const mixed = [...items, item({ id: "c", category: "npm_cache", sizeBytes: 5 })];
+      const groups = groupByCategory(mixed);
+      expect(groups.find((g) => g.id === "system_data")!.bytes).toBe(10);
+      expect(foundBytes(mixed)).toBe(15);
+      const only = groupByCategory([items[1]!]);
+      expect(only[0]!.bytes).toBe(0);
+      expect(foundBytes([items[1]!])).toBe(0);
+    });
   });
 });

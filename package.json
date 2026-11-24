@@ -1,6 +1,6 @@
 {
   "name": "bizzi-mac-cleaner",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "Interactive TUI to reclaim disk space from developer caches, stale project artifacts, and large files on macOS.",
   "type": "module",
   "bin": {
@@ -26,6 +26,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "fixture": "tsx scripts/generate-fixture.ts",
+    "docs:system-data": "tsx scripts/generate-system-data-docs.ts",
     "audit:prod": "npm audit --omit=dev",
     "prepublishOnly": "npm test && npm run build"
   },
